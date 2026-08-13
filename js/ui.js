@@ -380,8 +380,10 @@ const UI = {
 
     section.classList.remove('hidden');
 
-    const cols = Math.ceil(mapWidth / tileSize) + 1;
-    const rows = Math.ceil(mapHeight / tileSize) + 1;
+    let cols = Math.ceil(mapWidth / tileSize) + 1;
+    if (cols % 2 === 0) cols += 1;
+    let rows = Math.ceil(mapHeight / tileSize) + 1;
+    if (rows % 2 === 0) rows += 1;
 
     const startTx = centerTx - Math.floor(cols / 2);
     const startTy = centerTy - Math.floor(rows / 2);
@@ -600,11 +602,15 @@ const UI = {
     }
 
     let xlabels = '';
-    for (let i = 0; i < times.length; i += 6) {
+    const minGap = 76;
+    const labelStep = [6, 8, 12, 24].find((s) => (iw * s) / times.length >= minGap) || 24;
+    for (let i = 0; i < times.length; i += labelStep) {
       xlabels += `<text x="${x(i).toFixed(1)}" y="${H - 12}" text-anchor="middle" font-size="18" font-weight="600" fill="currentColor" fill-opacity="0.9">${Utils.formatHourShort(times[i])}</text>`;
     }
-    const dayEnd = new Date(new Date(times[0]).getTime() + 86400000);
-    xlabels += `<text x="${x(times.length).toFixed(1)}" y="${H - 12}" text-anchor="end" font-size="18" font-weight="600" fill="currentColor" fill-opacity="0.9">${Utils.formatHourShort(dayEnd)}</text>`;
+    if (labelStep < 24) {
+      const dayEnd = new Date(new Date(times[0]).getTime() + 86400000);
+      xlabels += `<text x="${x(times.length).toFixed(1)}" y="${H - 12}" text-anchor="end" font-size="18" font-weight="600" fill="currentColor" fill-opacity="0.9">${Utils.formatHourShort(dayEnd)}</text>`;
+    }
 
     let bars = '';
     if (pops) {
