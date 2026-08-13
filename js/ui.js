@@ -120,6 +120,7 @@ const UI = {
       <div class="current-weather__updated" id="currentUpdated">Updated ${Utils.formatClock(new Date())}</div>
       <div class="current-weather__celestial">
         <div class="celestial">
+          <div class="celestial__title">Sun</div>
           <div class="celestial__times">
             <div class="celestial__row"><span class="celestial__label">Rise</span><span class="celestial__value">${sunrise}</span></div>
             <div class="celestial__row"><span class="celestial__label">Set</span><span class="celestial__value">${sunset}</span></div>
@@ -127,6 +128,7 @@ const UI = {
         </div>
         <div class="celestial-divider" aria-hidden="true"></div>
         <div class="celestial">
+          <div class="celestial__title">Moon</div>
           <div class="celestial__times">
             <div class="celestial__row"><span class="celestial__label">Rise</span><span class="celestial__value">${moonrise}</span></div>
             <div class="celestial__row"><span class="celestial__label">Set</span><span class="celestial__value">${moonset}</span></div>
@@ -327,11 +329,27 @@ const UI = {
 
     const tempColor = tempValue != null ? Utils.getTempColor(tempValue, units) : '';
 
-    const zoom = 13;
     const tileSize = 256;
-    const n = Math.pow(2, zoom);
+    const maxWidth = container.clientWidth || 600;
+    const padH = 48;
+    const padV = 40;
+    const budgetW = Math.max(320, maxWidth - padH * 2);
+    const budgetH = 520;
 
     const latRad = (lat * Math.PI) / 180;
+    const lonScale = Math.max(0.7, Math.min(1.5, 1 / Math.cos(latRad)));
+    const dLat = CONFIG.TEMP_SPREAD;
+    const dLon = dLat * lonScale;
+
+    const merc = (la) => Math.log(Math.tan((la * Math.PI) / 180) + 1 / Math.cos((la * Math.PI) / 180));
+    const kH = (((merc(lat + dLat) - merc(lat - dLat)) / Math.PI) / 2) * tileSize;
+    const kW = ((2 * dLon) / 360) * tileSize;
+
+    const zW = Math.floor(Math.log2(budgetW / kW));
+    const zH = Math.floor(Math.log2(budgetH / kH));
+    const zoom = Math.max(8, Math.min(14, Math.min(zW, zH)));
+    const n = Math.pow(2, zoom);
+
     const xt = ((lon + 180) / 360) * n;
     const yt = ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * n;
 
@@ -340,9 +358,27 @@ const UI = {
     const fx = xt - centerTx;
     const fy = yt - centerTy;
 
+    const toX = (lo) => ((lo + 180) / 360) * n;
+    const toY = (la) => ((1 - Math.log(Math.tan((la * Math.PI) / 180) + 1 / Math.cos((la * Math.PI) / 180)) / Math.PI) / 2) * n;
+
+    const tempPoints = temps && temps.length ? temps : null;
+    const probe = tempPoints || [
+      { lat: lat - dLat, lon: lon - dLon }, { lat: lat - dLat, lon: lon }, { lat: lat - dLat, lon: lon + dLon },
+      { lat, lon: lon - dLon }, { lat, lon: lon + dLon },
+      { lat: lat + dLat, lon: lon - dLon }, { lat: lat + dLat, lon: lon }, { lat: lat + dLat, lon: lon + dLon },
+    ];
+
+    let minDy = 0, maxDy = 0;
+    probe.forEach((p) => {
+      const dy = (toY(p.lat) - yt) * tileSize;
+      minDy = Math.min(minDy, dy);
+      maxDy = Math.max(maxDy, dy);
+    });
+
+    const mapWidth = maxWidth;
+    const mapHeight = Math.max(200, Math.min(Math.ceil(maxDy - minDy) + padV * 2, 560));
+
     section.classList.remove('hidden');
-    const mapWidth = container.clientWidth || 600;
-    const mapHeight = Math.min(380, Math.round(mapWidth * 0.5));
 
     const cols = Math.ceil(mapWidth / tileSize) + 1;
     const rows = Math.ceil(mapHeight / tileSize) + 1;
@@ -365,13 +401,10 @@ const UI = {
     }
 
     let tempBadges = '';
-    if (temps && temps.length) {
-      temps.forEach((p) => {
-        const pLatRad = (p.lat * Math.PI) / 180;
-        const xw = ((p.lon + 180) / 360) * n;
-        const yw = ((1 - Math.log(Math.tan(pLatRad) + 1 / Math.cos(pLatRad)) / Math.PI) / 2) * n;
-        const px = (xw - startTx) * tileSize + offX;
-        const py = (yw - startTy) * tileSize + offY;
+    if (tempPoints) {
+      tempPoints.forEach((p) => {
+        const px = (toX(p.lon) - startTx) * tileSize + offX;
+        const py = (toY(p.lat) - startTy) * tileSize + offY;
         if (px < -10 || py < -10 || px > mapWidth + 10 || py > mapHeight + 10) return;
         tempBadges += `<div class="map-temp map-temp--small" style="left:${px.toFixed(1)}px; top:${py.toFixed(1)}px; --temp-bg:${p.color}">${p.label}</div>`;
       });
@@ -584,18 +617,26 @@ const UI = {
       });
     }
 
+    const gradStops = [1, 0.75, 0.5, 0.25, 0].map((f) => {
+      const t = minT + span * f;
+      return `<stop offset="${Math.round(f * 100)}%" stop-color="${Utils.getTempColor(t, units)}"/>`;
+    }).join('');
+
     const dots = temps.map((t, i) =>
-      `<circle cx="${x(i).toFixed(1)}" cy="${y(t).toFixed(1)}" r="3.5" fill="currentColor"/>`
+      `<circle cx="${x(i).toFixed(1)}" cy="${y(t).toFixed(1)}" r="4" fill="${Utils.getTempColor(t, units)}" stroke="rgba(255,255,255,0.85)" stroke-width="1.2"/>`
     ).join('');
 
     container.innerHTML = `
       <svg viewBox="0 0 ${W} ${H}" class="hourly-chart__svg" role="img"
            aria-label="24-hour temperature trend with precipitation probability">
+        <defs>
+          <linearGradient id="tempGrad" x1="0" y1="0" x2="0" y2="1">${gradStops}</linearGradient>
+        </defs>
         ${grid}
         ${xlabels}
         ${bars}
-        <polygon points="${area}" fill="currentColor" fill-opacity="0.1"/>
-        <polyline points="${points}" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <polygon points="${area}" fill="url(#tempGrad)" fill-opacity="0.22"/>
+        <polyline points="${points}" fill="none" stroke="url(#tempGrad)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
         ${dots}
       </svg>`;
   },
@@ -621,7 +662,8 @@ const UI = {
       : null;
     UI._mapTempValue = tempValue;
     if (lat != null && lon != null) {
-      this.renderMap(lat, lon, tempLabel, tempValue, units, UI._mapTemps || []);
+      UI._mapTemps = [];
+      this.renderMap(lat, lon, tempLabel, tempValue, units, []);
       API.getLocalTemps(lat, lon, units)
         .then((temps) => {
           if (!temps || !temps.length) return;

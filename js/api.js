@@ -59,7 +59,7 @@ const API = {
 
   async getLocalTemps(lat, lon, units) {
     const tempUnit = units === 'imperial' ? 'fahrenheit' : 'celsius';
-    const latD = 0.05;
+    const latD = CONFIG.TEMP_SPREAD;
     const lonScale = Math.max(0.7, Math.min(1.5, 1 / Math.cos((lat * Math.PI) / 180)));
     const lonD = latD * lonScale;
     const offsets = [
