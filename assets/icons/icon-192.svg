@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4facfe"/>
+      <stop offset="100%" style="stop-color:#00f2fe"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="40" fill="url(#bg)"/>
+  <circle cx="96" cy="88" r="28" fill="none" stroke="#fff" stroke-width="5"/>
+  <g stroke="#fff" stroke-width="5" stroke-linecap="round">
+    <line x1="96" y1="48" x2="96" y2="38"/>
+    <line x1="96" y1="138" x2="96" y2="128"/>
+    <line x1="56" y1="88" x2="46" y2="88"/>
+    <line x1="146" y1="88" x2="136" y2="88"/>
+    <line x1="67.7" y1="59.7" x2="60.6" y2="52.6"/>
+    <line x1="131.4" y1="124.3" x2="124.3" y2="117.2"/>
+    <line x1="67.7" y1="116.3" x2="60.6" y2="123.4"/>
+    <line x1="131.4" y1="51.7" x2="124.3" y2="58.8"/>
+  </g>
+  <text x="96" y="170" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="16" fill="#fff" opacity="0.9">Ambr3Weather</text>
+</svg>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Ambr3Weather - A privacy-first weather app. No tracking, no ads, no cookies. Just weather.">
+  <meta name="theme-color" content="#4facfe">
+  <meta name="color-scheme" content="light dark">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Ambr3Weather">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(self), gyroscope=(), magnetometer=(), payment=(), usb=()">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; form-action 'self'; connect-src https://api.open-meteo.com https://air-quality-api.open-meteo.com https://geocoding-api.open-meteo.com; img-src 'self' data: https://tile.openstreetmap.org; style-src 'self' 'unsafe-inline'; script-src 'self';">
+
+  <title>Ambr3Weather — Private Weather</title>
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/icon-192.svg">
+
+  <link rel="stylesheet" href="css/style.css?v=28">
+  <link rel="stylesheet" href="css/responsive.css?v=28">
+  <link rel="preconnect" href="https://api.open-meteo.com">
+  <link rel="preconnect" href="https://air-quality-api.open-meteo.com">
+  <link rel="preconnect" href="https://geocoding-api.open-meteo.com">
+</head>
+<body class="theme-clear">
+
+  <header class="header">
+    <div class="header__logo">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="4"></circle>
+        <path d="M12 2v2"></path>
+        <path d="M12 20v2"></path>
+        <path d="m4.93 4.93 1.41 1.41"></path>
+        <path d="m17.66 17.66 1.41 1.41"></path>
+        <path d="M2 12h2"></path>
+        <path d="M20 12h2"></path>
+        <path d="m6.34 17.66-1.41 1.41"></path>
+        <path d="m19.07 4.93-1.41 1.41"></path>
+      </svg>
+      <h1>Ambr3Weather</h1>
+    </div>
+    <div class="header__controls">
+      <button class="icon-btn" id="helpToggle" aria-label="How to use" aria-expanded="false">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      </button>
+      <button class="icon-btn" id="themeToggle" aria-label="Toggle dark mode">
+        <span id="themeIcon">☾</span>
+      </button>
+      <div class="units-menu" id="unitsMenu">
+        <button class="unit-toggle" id="unitMenuBtn" aria-label="Units" aria-expanded="false">
+          <span id="unitMenuLabel">°C</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="units-menu__dropdown hidden" id="unitsDropdown">
+          <div class="units-menu__row">
+            <span class="units-menu__label">Temp</span>
+            <button class="units-menu__btn" id="unitToggle" aria-pressed="false"><span id="unitLabel">°C</span></button>
+          </div>
+          <div class="units-menu__row">
+            <span class="units-menu__label">Wind</span>
+            <button class="units-menu__btn" id="windToggle" aria-pressed="false"><span id="windLabel">km/h</span></button>
+          </div>
+          <div class="units-menu__row">
+            <span class="units-menu__label">Visibility</span>
+            <button class="units-menu__btn" id="visToggle" aria-pressed="false"><span id="visLabel">km</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="instructions hidden" id="instructions" aria-label="How to use">
+    <button class="instructions__close" id="helpClose" aria-label="Close instructions">&times;</button>
+    <h2 class="instructions__title">How to use Ambr3Weather</h2>
+    <ol class="instructions__list">
+      <li><strong>Search or locate</strong> — type a city in the search box, or tap the crosshair button to use your current location.</li>
+      <li><strong>View the forecast</strong> — the main card shows today's conditions, sun/moon times, and an arc of daylight. Below it are the hourly, 7&nbsp;or&nbsp;14&nbsp;day forecast, and a map of your area.</li>
+      <li><strong>Switch units</strong> — tap the units button (°C) in the top bar to change temperature, wind speed, and visibility units.</li>
+      <li><strong>Explore conditions</strong> — the Conditions card groups precipitation, wind, humidity, UV index, visibility, pressure, air quality, and pollen.</li>
+      <li><strong>Works offline</strong> — the last forecast is saved, so the app works without a connection.</li>
+      <li><strong>Install it</strong> — tap the install banner on Android, or on iPhone use Share &rarr; "Add to Home Screen".</li>
+    </ol>
+  </section>
+
+  <main>
+    <section class="search-section">
+      <form class="search-form" id="searchForm" role="search">
+        <label for="searchInput" class="sr-only">Search city</label>
+        <input
+          type="text"
+          id="searchInput"
+          class="search-input"
+          placeholder="Search city..."
+          autocomplete="off"
+          autocapitalize="words"
+          spellcheck="false"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded="false"
+          aria-controls="searchDropdown"
+          aria-label="Search city"
+        >
+        <button type="submit" class="search-btn" aria-label="Search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.3-4.3"></path>
+          </svg>
+        </button>
+        <button type="button" class="location-btn" id="locationBtn" aria-label="Use my location">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12 2v4"></path>
+            <path d="M12 18v4"></path>
+            <path d="M2 12h4"></path>
+            <path d="M18 12h4"></path>
+          </svg>
+        </button>
+      </form>
+      <div class="search-dropdown hidden" id="searchDropdown" role="listbox" aria-label="Search results"></div>
+    </section>
+
+    <div id="loading" class="loading hidden" aria-live="polite">
+      <div class="spinner"></div>
+      <span>Fetching weather...</span>
+    </div>
+
+    <div id="errorMessage" class="error-message hidden" role="alert"></div>
+
+    <div id="offlineNotice" class="offline-notice hidden" role="status">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
+        <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
+        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+        <line x1="12" y1="20" x2="12.01" y2="20"></line>
+      </svg>
+      You're offline — showing the last saved forecast.
+    </div>
+
+    <div id="alertsBar" class="alerts-bar hidden" role="alert"></div>
+
+    <div id="weatherContent" class="weather-content">
+
+      <section class="current-weather" id="currentWeather" aria-label="Current weather"></section>
+
+      <section class="forecast-section">
+        <div class="section-head">
+          <h2 class="section-title">Forecast</h2>
+          <div class="segmented" role="tablist" aria-label="Forecast length">
+            <button type="button" class="segmented__btn is-active" id="fc7Btn" role="tab" aria-selected="true">7 Day</button>
+            <button type="button" class="segmented__btn" id="fc14Btn" role="tab" aria-selected="false">14 Day</button>
+          </div>
+        </div>
+        <div class="forecast-cards" id="forecastCards" role="list"></div>
+      </section>
+
+      <section class="hourly-section">
+        <h2 class="section-title">Hourly Forecast</h2>
+        <div class="hourly-scroll" id="hourlyScroll" role="list"></div>
+        <div class="hourly-chart hidden" id="hourlyChart" aria-label="Hourly temperature chart"></div>
+      </section>
+
+      <section class="detail-section hidden" id="detailGrid" aria-label="Weather details"></section>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>
+      Ambr3Weather v28 &mdash; No tracking. No ads. No cookies.
+      <br>
+      Powered by <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a>.
+      Map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>.
+      <a href="https://github.com/ambr3/Ambr3Weather" target="_blank" rel="noopener noreferrer">      Open source</a> under GPL.
+    </p>
+  </footer>
+
+  <div class="install-banner hidden" id="installBanner">
+    <span>Install Ambr3Weather on your device</span>
+    <button class="install-btn" id="installBtn">Install</button>
+    <button class="install-dismiss" id="installDismiss" aria-label="Dismiss">&times;</button>
+  </div>
+
+  <script src="js/config.js?v=28"></script>
+  <script src="js/utils.js?v=28"></script>
+  <script src="js/icons.js?v=28"></script>
+  <script src="js/api.js?v=28"></script>
+  <script src="js/ui.js?v=28"></script>
+  <script src="js/app.js?v=28"></script>
+</body>
+</html>
