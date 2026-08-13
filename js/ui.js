@@ -331,10 +331,10 @@ const UI = {
 
     const tileSize = 256;
     const maxWidth = container.clientWidth || 600;
-    const padH = 48;
-    const padV = 40;
-    const budgetW = Math.max(320, maxWidth - padH * 2);
-    const budgetH = 520;
+    const padH = 16;
+    const padV = 36;
+    const budgetW = Math.max(300, maxWidth - padH * 2);
+    const budgetH = 728;
 
     const latRad = (lat * Math.PI) / 180;
     const lonScale = Math.max(0.7, Math.min(1.5, 1 / Math.cos(latRad)));
@@ -376,7 +376,7 @@ const UI = {
     });
 
     const mapWidth = maxWidth;
-    const mapHeight = Math.max(200, Math.min(Math.ceil(maxDy - minDy) + padV * 2, 560));
+    const mapHeight = Math.max(200, Math.min(Math.ceil(maxDy - minDy) + padV * 2, 800));
 
     section.classList.remove('hidden');
 
@@ -521,12 +521,10 @@ const UI = {
   },
 
   renderHourly(hourly, units) {
-    const now = new Date();
-    const currentHour = now.getHours();
+    const now = Date.now();
     let startIdx = 0;
     for (let i = 0; i < hourly.time.length; i++) {
-      const t = new Date(hourly.time[i]);
-      if (t.getHours() === currentHour) { startIdx = i; break; }
+      if (new Date(hourly.time[i]).getTime() >= now) { startIdx = i; break; }
     }
     const windUnit = Utils.getWindUnit(UI.windUnit);
     const cards = hourly.time.slice(startIdx, startIdx + 12).map((time, i) => {
@@ -587,7 +585,7 @@ const UI = {
     const maxT = Math.max(...temps);
     const span = Math.max(1, maxT - minT);
     const y = (t) => padT + ih - ((t - minT) / span) * ih;
-    const x = (i) => padL + (i / (times.length - 1)) * iw;
+    const x = (i) => padL + (i / times.length) * iw;
 
     const points = temps.map((t, i) => `${x(i).toFixed(1)},${y(t).toFixed(1)}`).join(' ');
     const area = `${padL},${(padT + ih).toFixed(1)} ${points} ${x(times.length - 1).toFixed(1)},${(padT + ih).toFixed(1)}`;
@@ -605,6 +603,8 @@ const UI = {
     for (let i = 0; i < times.length; i += 6) {
       xlabels += `<text x="${x(i).toFixed(1)}" y="${H - 12}" text-anchor="middle" font-size="18" font-weight="600" fill="currentColor" fill-opacity="0.9">${Utils.formatHourShort(times[i])}</text>`;
     }
+    const dayEnd = new Date(new Date(times[0]).getTime() + 86400000);
+    xlabels += `<text x="${x(times.length).toFixed(1)}" y="${H - 12}" text-anchor="end" font-size="18" font-weight="600" fill="currentColor" fill-opacity="0.9">${Utils.formatHourShort(dayEnd)}</text>`;
 
     let bars = '';
     if (pops) {
@@ -701,11 +701,10 @@ const UI = {
 
   initThemeToggle() {
     const saved = localStorage.getItem('theme');
-    if (saved === 'dark') {
-      document.body.classList.add('theme-dark');
-    } else if (saved === 'light') {
-      document.body.classList.remove('theme-dark');
-    }
+    const isDark = saved === 'dark';
+    document.body.classList.toggle('theme-dark', isDark);
+    const icon = this.$('themeIcon');
+    if (icon) icon.textContent = isDark ? '\u2600' : '\u263E';
   },
 
   toggleTheme() {

@@ -895,7 +895,6 @@ body.theme-dark.theme-mist { --color-bg-start: #1a1a2e; --color-bg-end: #2d2d44;
 
 .detail-box--map {
   grid-column: 1 / -1;
-  padding: 0.6rem;
 }
 
 .detail-box--map .detail-box__title {

@@ -132,6 +132,7 @@ const App = {
         UI.setUnitLabel(this.units);
         UI.markOffline(!navigator.onLine);
         UI.renderWeather(cached.weather, cached.aq || null, this.units, cached.name, cached.country, cached.lat, cached.lon, this.forecastDays);
+        this._last = { weather: cached.weather, aq: cached.aq || null, units: this.units, name: cached.name, country: cached.country || '', lat: cached.lat, lon: cached.lon, forecastDays: this.forecastDays };
       } else if (CONFIG.DEFAULT_CITY) {
         this.searchCity(CONFIG.DEFAULT_CITY);
       }
