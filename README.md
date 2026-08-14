@@ -27,13 +27,16 @@ I would always recommend using Vanadium (GrapheneOS) or Brave Browser to install
 - **Zero tracking** — no analytics, no cookies, no fingerprinting, no third-party scripts
 - **No server** — pure static site, nothing runs server-side
 - **No API key required** — powered by [Open-Meteo](https://open-meteo.com/), a free open-source weather API with no account needed
-- **Everything stays on your device** — preferences (units, theme, wind speed), the last viewed location, and a cached forecast are stored only in your browser's `localStorage`/cache and are never sent anywhere
+- **Everything stays on your device** — preferences (units, theme, wind speed), the last viewed location, and a cached forecast are stored only in your browser's `localStorage`/cache and are never sent to third parties
+- **What does leave your device** — opening the app (or the 30-minute auto-refresh) fetches the forecast for the last viewed location, including its coordinates, from Open-Meteo; viewing the map loads tiles from OpenStreetMap. These are the only outbound requests, and no tracking headers are sent with them
+- **Cached API data is pruned** — forecast/search responses cached by the service worker are automatically removed after 7 days
 - **Geolocation is opt-in** — used only when you tap "Use my location", and sent only to Open-Meteo (forecast) and OpenStreetMap (map tiles)
 - **Open source** — GPL-3.0 licensed, fully auditable
 - **CSP locked down** — `script-src 'self'`, `base-uri 'self'`, `form-action 'self'`. Only connects to Open-Meteo APIs and OpenStreetMap tiles
 - **No Google Fonts** — system font stack only, zero external font requests
 - **No referrer leakage** — `no-referrer` sent on every request
 - **Unused capabilities disabled** — camera, microphone, sensors, and payment are blocked via `Permissions-Policy`
+- **Clickjacking** — the CSP meta tag cannot enforce `frame-ancestors`; the hosting server must send `X-Frame-Options: DENY` (and/or a `frame-ancestors 'none'` CSP header). A sample [`.htaccess`](.htaccess) is included for Apache hosts
 
 ## Features
 

@@ -1,15 +1,18 @@
 const App = {
-  units: localStorage.getItem('units') || CONFIG.DEFAULT_UNITS,
-  windUnit: localStorage.getItem('windUnit') || (localStorage.getItem('units') === 'imperial' ? 'mph' : 'kmh'),
-  visUnit: localStorage.getItem('visUnit') || 'km',
-  forecastDays: parseInt(localStorage.getItem('forecastDays'), 10) === 14 ? 14 : 7,
-  lastCity: localStorage.getItem('lastCity') || null,
-  lastCountry: localStorage.getItem('lastCountry') || '',
-  lastLat: parseFloat(localStorage.getItem('lastLat')),
-  lastLon: parseFloat(localStorage.getItem('lastLon')),
+  units: Utils.safeGet('units', null) || CONFIG.DEFAULT_UNITS,
+  windUnit: Utils.safeGet('windUnit', null) || (Utils.safeGet('units', null) === 'imperial' ? 'mph' : 'kmh'),
+  visUnit: Utils.safeGet('visUnit', null) || 'km',
+  forecastDays: parseInt(Utils.safeGet('forecastDays', ''), 10) === 14 ? 14 : 7,
+  lastCity: Utils.safeGet('lastCity', null),
+  lastCountry: Utils.safeGet('lastCountry', '') || '',
+  lastLat: parseFloat(Utils.safeGet('lastLat', '')),
+  lastLon: parseFloat(Utils.safeGet('lastLon', '')),
   deferredPrompt: null,
   dropdownResults: [],
   dropdownIndex: -1,
+  _weatherSeq: 0,
+  _searchSeq: 0,
+  _blurTimer: null,
 
   init() {
     UI.setUnitLabel(this.units);
@@ -32,9 +35,11 @@ const App = {
 
     this.$('searchInput').addEventListener('keydown', (e) => this.handleDropdownKeys(e));
     this.$('searchInput').addEventListener('blur', () => {
-      setTimeout(() => this.hideDropdown(), 150);
+      if (this._blurTimer) clearTimeout(this._blurTimer);
+      this._blurTimer = setTimeout(() => this.hideDropdown(), 150);
     });
     this.$('searchInput').addEventListener('focus', () => {
+      if (this._blurTimer) { clearTimeout(this._blurTimer); this._blurTimer = null; }
       const q = this.$('searchInput').value.trim();
       if (q.length >= 2 && this.dropdownResults.length) this.showDropdownList();
     });
@@ -47,7 +52,7 @@ const App = {
 
     this.$('unitToggle').addEventListener('click', () => {
       this.units = this.units === 'metric' ? 'imperial' : 'metric';
-      localStorage.setItem('units', this.units);
+      Utils.safeSet('units', this.units);
       UI.setUnitLabel(this.units);
       UI.setUnitMenuLabel(this.units);
       this.reloadCurrent();
@@ -56,14 +61,14 @@ const App = {
     this.$('windToggle').addEventListener('click', () => {
       const cycle = ['kmh', 'mph', 'kn', 'ms'];
       this.windUnit = cycle[(cycle.indexOf(this.windUnit) + 1) % cycle.length];
-      localStorage.setItem('windUnit', this.windUnit);
+      Utils.safeSet('windUnit', this.windUnit);
       UI.setWindUnitLabel(this.windUnit);
       this.reloadCurrent();
     });
 
     this.$('visToggle').addEventListener('click', () => {
       this.visUnit = this.visUnit === 'km' ? 'mi' : 'km';
-      localStorage.setItem('visUnit', this.visUnit);
+      Utils.safeSet('visUnit', this.visUnit);
       UI.setVisLabel(this.visUnit);
       this.reloadCurrent();
     });
@@ -93,10 +98,12 @@ const App = {
     this.$('installBtn').addEventListener('click', () => {
       if (this.deferredPrompt) {
         this.deferredPrompt.prompt();
-        this.deferredPrompt.userChoice.then(() => {
-          this.deferredPrompt = null;
-          this.$('installBanner').classList.add('hidden');
-        });
+        this.deferredPrompt.userChoice
+          .then(() => {
+            this.deferredPrompt = null;
+            this.$('installBanner').classList.add('hidden');
+          })
+          .catch(() => {});
       }
     });
 
@@ -121,14 +128,14 @@ const App = {
 
     if (Number.isFinite(this.lastLat) && Number.isFinite(this.lastLon)) {
       const name = this.lastCity || CONFIG.DEFAULT_CITY;
-      this.loadWeather(this.lastLat, this.lastLon, name, this.lastCountry || '', name);
+      this.loadWeather(this.lastLat, this.lastLon, name, this.lastCountry || '', name).catch(() => {});
     } else if (this.lastCity) {
       this.searchCity(this.lastCity);
     } else {
       const cached = Utils.loadWeatherCache();
       if (cached && cached.weather) {
         this.units = cached.units || this.units;
-        localStorage.setItem('units', this.units);
+        Utils.safeSet('units', this.units);
         UI.setUnitLabel(this.units);
         UI.markOffline(!navigator.onLine);
         UI.renderWeather(cached.weather, cached.aq || null, this.units, cached.name, cached.country, cached.lat, cached.lon, this.forecastDays);
@@ -153,25 +160,38 @@ const App = {
   async refreshSilently() {
     if (!Number.isFinite(this.lastLat) || !Number.isFinite(this.lastLon)) return;
     if (!navigator.onLine) return;
+    const seq = ++this._weatherSeq;
+    const lat = this.lastLat;
+    const lon = this.lastLon;
+    const units = this.units;
+    const windUnit = this.windUnit;
+    const forecastDays = this.forecastDays;
+    const city = this.lastCity || 'Current Location';
+    const country = this.lastCountry || '';
     try {
       const [weather, aq] = await Promise.all([
-        API.getWeather(this.lastLat, this.lastLon, this.units, this.windUnit, this.forecastDays),
-        API.getAirQuality(this.lastLat, this.lastLon).catch(() => null),
+        API.getWeather(lat, lon, units, windUnit, forecastDays),
+        API.getAirQuality(lat, lon).catch(() => null),
       ]);
+      if (seq !== this._weatherSeq) return;
       if (!weather) return;
-      API.getAlerts(this.lastLat, this.lastLon).then((alerts) => UI.renderAlerts(alerts)).catch(() => {});
-      const name = this.lastCity || 'Current Location';
-      UI.renderWeather(weather, aq, this.units, name, this.lastCountry || '', this.lastLat, this.lastLon, this.forecastDays);
-      this._last = { weather, aq, units: this.units, name, country: this.lastCountry || '', lat: this.lastLat, lon: this.lastLon, forecastDays: this.forecastDays };
-      Utils.saveWeatherCache({ savedAt: Date.now(), units: this.units, name, country: this.lastCountry || '', lat: this.lastLat, lon: this.lastLon, weather, aq });
+      API.getAlerts(lat, lon).then((alerts) => {
+        if (seq === this._weatherSeq) UI.renderAlerts(alerts);
+      }).catch(() => {});
+      UI.renderWeather(weather, aq, units, city, country, lat, lon, forecastDays);
+      this._last = { weather, aq, units, name: city, country, lat, lon, forecastDays };
+      Utils.saveWeatherCache({ savedAt: Date.now(), units, name: city, country, lat, lon, weather, aq });
     } catch (e) {
       /* silent background refresh; keep existing data on failure */
     }
   },
 
   async showDropdown(query) {
+    const seq = ++this._searchSeq;
     try {
-      this.dropdownResults = await API.searchCities(query);
+      const results = await API.searchCities(query);
+      if (seq !== this._searchSeq) return;
+      this.dropdownResults = results;
       this.dropdownIndex = -1;
       if (this.dropdownResults.length) {
         this.showDropdownList();
@@ -179,7 +199,7 @@ const App = {
         this.hideDropdown();
       }
     } catch {
-      this.hideDropdown();
+      if (seq === this._searchSeq) this.hideDropdown();
     }
   },
 
@@ -223,12 +243,14 @@ const App = {
   selectDropdown(idx) {
     const r = this.dropdownResults[idx];
     if (!r) return;
-    this.$('searchInput').value = r.name;
+    const displayName = r.name || 'Location';
+    this.$('searchInput').value = displayName;
     this.hideDropdown();
-    this.fetchAndRender(r.name, r.lat, r.lon, r.name, r.country);
+    this.fetchAndRender(displayName, r.lat, r.lon, displayName, r.country);
   },
 
   hideDropdown() {
+    if (this._blurTimer) { clearTimeout(this._blurTimer); this._blurTimer = null; }
     this.$('searchDropdown').classList.add('hidden');
     this.dropdownResults = [];
     this.dropdownIndex = -1;
@@ -266,17 +288,20 @@ const App = {
   },
 
   async searchCity(city) {
+    const seq = ++this._weatherSeq;
     UI.showLoading();
     try {
       const geo = await API.geocode(city);
+      if (seq !== this._weatherSeq) return;
       await this.fetchAndRender(city, geo.lat, geo.lon, geo.name, geo.country);
     } catch (err) {
+      if (seq !== this._weatherSeq) return;
       const cached = Utils.loadWeatherCache();
       if (cached && cached.weather && !navigator.onLine) {
         UI.markOffline(true);
         UI.renderWeather(cached.weather, cached.aq || null, this.units, cached.name, cached.country, cached.lat, cached.lon, this.forecastDays);
       } else {
-        UI.showError(err.message);
+        UI.showError(err && err.message ? err.message : 'Something went wrong.');
       }
     }
   },
@@ -299,7 +324,7 @@ const App = {
   setForecastDays(days) {
     if (this.forecastDays === days) return;
     this.forecastDays = days;
-    localStorage.setItem('forecastDays', days);
+    Utils.safeSet('forecastDays', days);
     this.updateForecastTabs();
     this.reloadCurrent();
   },
@@ -316,6 +341,7 @@ const App = {
   },
 
   async loadWeather(lat, lon, name, country, cityKey) {
+    const seq = ++this._weatherSeq;
     UI.showLoading();
     let weather;
     let aq = null;
@@ -324,8 +350,11 @@ const App = {
         API.getWeather(lat, lon, this.units, this.windUnit, this.forecastDays),
         API.getAirQuality(lat, lon).catch(() => null),
       ]);
-      API.getAlerts(lat, lon).then((alerts) => UI.renderAlerts(alerts)).catch(() => {});
+      API.getAlerts(lat, lon).then((alerts) => {
+        if (seq === this._weatherSeq) UI.renderAlerts(alerts);
+      }).catch(() => {});
     } catch (err) {
+      if (seq !== this._weatherSeq) return;
       const cached = Utils.loadWeatherCache();
       if (cached && cached.weather) {
         weather = cached.weather;
@@ -334,10 +363,12 @@ const App = {
         country = cached.country || country;
         UI.markOffline(!navigator.onLine);
       } else {
-        UI.showError(err.message);
+        UI.showError(err && err.message ? err.message : 'Something went wrong.');
         return;
       }
     }
+
+    if (seq !== this._weatherSeq) return;
 
     UI.renderWeather(weather, aq, this.units, name, country, lat, lon, this.forecastDays);
     this._last = { weather, aq, units: this.units, name, country, lat, lon, forecastDays: this.forecastDays };
@@ -345,14 +376,15 @@ const App = {
     this.lastCountry = country;
     this.lastLat = lat;
     this.lastLon = lon;
-    localStorage.setItem('lastCity', cityKey);
-    localStorage.setItem('lastCountry', country);
-    localStorage.setItem('lastLat', lat);
-    localStorage.setItem('lastLon', lon);
+    Utils.safeSet('lastCity', cityKey);
+    Utils.safeSet('lastCountry', country);
+    Utils.safeSet('lastLat', lat);
+    Utils.safeSet('lastLon', lon);
     Utils.saveWeatherCache({ savedAt: Date.now(), units: this.units, name, country, lat, lon, weather, aq });
   },
 
   async useLocation() {
+    const seq = ++this._weatherSeq;
     if (!navigator.geolocation) {
       UI.showError('Geolocation is not supported by your browser.');
       return;
@@ -363,14 +395,20 @@ const App = {
       async (pos) => {
         try {
           const { latitude: lat, longitude: lon } = pos.coords;
+          if (seq !== this._weatherSeq) return;
           await this.loadWeather(lat, lon, 'Current Location', '', 'Current Location');
         } catch (err) {
-          UI.showError(err.message);
+          if (seq === this._weatherSeq) UI.showError(err && err.message ? err.message : 'Something went wrong.');
         }
       },
-      () => {
-        UI.showError('Location access denied. Please search for a city.');
-      }
+      (err) => {
+        if (seq !== this._weatherSeq) return;
+        const timedOut = err && err.code === 3;
+        UI.showError(timedOut
+          ? 'Location request timed out. Please search for a city.'
+          : 'Location access denied. Please search for a city.');
+      },
+      { timeout: 15000, maximumAge: 60000 }
     );
   },
 

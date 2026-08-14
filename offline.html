@@ -4,10 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#4facfe">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests; style-src 'self' 'unsafe-inline'; script-src 'self';">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), gyroscope=(), magnetometer=(), payment=(), usb=()">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests; connect-src 'none'; img-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-ancestors 'none';">
   <title>Ambr3Weather - Offline</title>
-  <link rel="stylesheet" href="css/style.css?v=0.3.2">
-  <link rel="stylesheet" href="css/responsive.css?v=0.3.2">
+  <link rel="stylesheet" href="css/style.css?v=0.3.3">
+  <link rel="stylesheet" href="css/responsive.css?v=0.3.3">
   <style>
     body {
       display: flex;
@@ -57,6 +59,6 @@
     <p>Ambr3Weather needs an internet connection to fetch weather data. Connect and try again.</p>
     <button id="retryBtn">Retry</button>
   </div>
-  <script src="js/offline.js?v=0.3.2"></script>
+  <script src="js/offline.js?v=0.3.3"></script>
 </body>
 </html>

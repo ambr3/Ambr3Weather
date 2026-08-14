@@ -1,0 +1,23 @@
+# Security headers for Ambr3Weather (Apache, requires mod_headers: `a2enmod headers`).
+# If you host elsewhere instead:
+#   - Netlify: use a `_headers` file
+#   - nginx: add an `add_header` block in your server config
+# The <meta http-equiv="Content-Security-Policy"> in index.html/offline.html remains as
+# a fallback for hosts that ignore .htaccess; when a server sends a CSP header it takes
+# precedence, so the headers below mirror the meta policies and add frame-ancestors.
+
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "DENY"
+  Header set Referrer-Policy "no-referrer"
+  Header set Permissions-Policy "camera=(), microphone=(), geolocation=(self), gyroscope=(), magnetometer=(), payment=(), usb=()"
+
+  # CSP is enforced only as an HTTP header; `frame-ancestors` is ignored in <meta>.
+  <FilesMatch "^index\.html$">
+    Header set Content-Security-Policy "default-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests; connect-src https://api.open-meteo.com https://air-quality-api.open-meteo.com https://geocoding-api.open-meteo.com; img-src 'self' https://tile.openstreetmap.org; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-ancestors 'none'"
+  </FilesMatch>
+
+  <FilesMatch "^offline\.html$">
+    Header set Content-Security-Policy "default-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests; connect-src 'none'; img-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-ancestors 'none'"
+  </FilesMatch>
+</IfModule>

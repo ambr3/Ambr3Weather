@@ -4,14 +4,61 @@ const Utils = {
     return units === 'imperial' ? `${rounded}°F` : `${rounded}°C`;
   },
 
-  formatTime(isoString) {
-    const d = new Date(isoString);
+  formatTime(isoString, tz) {
+    const d = isoString instanceof Date ? isoString : new Date(isoString);
+    if (tz) {
+      try {
+        const dtf = new Intl.DateTimeFormat('en-US', {
+          timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: true,
+        });
+        const input = isoString instanceof Date ? d : this.parseLocal(isoString, tz);
+        return dtf.format(input);
+      } catch {
+        /* invalid tz — fall through to device-local formatting */
+      }
+    }
     return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
   },
 
-  formatHourShort(isoString) {
-    const d = new Date(isoString);
+  formatHourShort(isoString, tz) {
+    const d = isoString instanceof Date ? isoString : new Date(isoString);
+    if (tz) {
+      try {
+        const dtf = new Intl.DateTimeFormat('en-US', {
+          timeZone: tz, hour: 'numeric', hour12: true,
+        });
+        const input = isoString instanceof Date ? d : this.parseLocal(isoString, tz);
+        return dtf.format(input);
+      } catch {
+        /* invalid tz — fall through to device-local formatting */
+      }
+    }
     return d.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
+  },
+
+  // Interpret a wall-clock ISO string (as returned by Open-Meteo with
+  // timezone=auto, i.e. no offset) as being local to the given IANA timezone.
+  // Falls back to the device-local parse when tz is missing.
+  parseLocal(iso, tz) {
+    const d = new Date(iso);
+    if (!tz || isNaN(d)) return d;
+    if (/Z$|[+-]\d\d:\d\d$/.test(iso)) return d;
+    const asUTC = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds());
+    let offsetMs;
+    try {
+      const dtf = new Intl.DateTimeFormat('en-US', {
+        timeZone: tz, hour12: false, year: 'numeric', month: '2-digit',
+        day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit',
+      });
+      const parts = {};
+      for (const part of dtf.formatToParts(new Date(asUTC))) {
+        if (part.type !== 'literal') parts[part.type] = parseInt(part.value, 10);
+      }
+      offsetMs = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second) - asUTC;
+    } catch {
+      return d;
+    }
+    return new Date(asUTC - offsetMs);
   },
 
   getWindDirection(deg) {
@@ -147,6 +194,23 @@ const Utils = {
       clearTimeout(timer);
       timer = setTimeout(() => fn(...args), ms);
     };
+  },
+
+  safeGet(key, fallback) {
+    try {
+      const v = localStorage.getItem(key);
+      return v == null ? fallback : v;
+    } catch {
+      return fallback;
+    }
+  },
+
+  safeSet(key, value) {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      // storage full or unavailable — best effort
+    }
   },
 
   saveWeatherCache(entry) {

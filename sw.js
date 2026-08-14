@@ -1,6 +1,6 @@
-const CACHE_NAME = 'ambr3weather-v0.3.2';
+const CACHE_NAME = 'ambr3weather-v0.3.3';
 const API_CACHE = 'ambr3weather-api-v1';
-const VERSION = 'v0.3.2';
+const VERSION = 'v0.3.3';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -38,10 +38,29 @@ self.addEventListener('activate', (event) => {
           .filter((k) => k !== CACHE_NAME && k !== API_CACHE)
           .map((k) => caches.delete(k))
       )
-    )
+    ).then(() => pruneApiCache()).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
+
+const API_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+
+async function pruneApiCache() {
+  try {
+    const cache = await caches.open(API_CACHE);
+    const requests = await cache.keys();
+    const now = Date.now();
+    await Promise.all(requests.map(async (req) => {
+      const resp = await cache.match(req);
+      if (!resp) return;
+      const cacheDate = resp.headers.get('date') || resp.headers.get('last-modified');
+      if (!cacheDate) return;
+      const t = Date.parse(cacheDate);
+      if (!isNaN(t) && now - t > API_MAX_AGE) await cache.delete(req);
+    }));
+  } catch (e) {
+    /* pruning is best-effort */
+  }
+}
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;

@@ -1,7 +1,5 @@
 const UI = {
   $: (id) => document.getElementById(id),
-  windUnit: 'kmh',
-  visUnit: 'km',
 
   showLoading() {
     this.$('loading').classList.remove('hidden');
@@ -47,9 +45,10 @@ const UI = {
     const rows = current.map((a) => {
       const title = this._esc(a.event || a.event_code || 'Weather alert');
       const desc = a.description ? this._esc(a.description) : '';
-      const severity = (a.severity || '').toLowerCase();
+      const raw = (a.severity || '').toLowerCase().replace(/[^a-z]/g, '');
+      const severity = /^(warning|orange|red|extreme|info|minor|moderate)$/.test(raw) ? raw : 'info';
       return `
-        <div class="alerts-bar__item alerts-bar__item--${severity || 'info'}">
+        <div class="alerts-bar__item alerts-bar__item--${severity}">
           <svg class="alerts-bar__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
             <line x1="12" y1="9" x2="12" y2="13"></line>
@@ -74,17 +73,17 @@ const UI = {
     const feels = Utils.formatTemp(c.apparent_temperature, units);
     const desc = Utils.getWeatherDescription(c.weather_code);
 
-    const sunrise = d.sunrise && d.sunrise[0] ? Utils.formatTime(d.sunrise[0]) : '—';
-    const sunset = d.sunset && d.sunset[0] ? Utils.formatTime(d.sunset[0]) : '—';
-    const moonrise = d.moonrise && d.moonrise[0] ? Utils.formatTime(d.moonrise[0]) : '—';
-    const moonset = d.moonset && d.moonset[0] ? Utils.formatTime(d.moonset[0]) : '—';
-    const phase = d.moon_phase && d.moon_phase[0];
+    const sunrise = d.sunrise && d.sunrise[0] ? Utils.formatTime(d.sunrise[0], this._tz) : '—';
+    const sunset = d.sunset && d.sunset[0] ? Utils.formatTime(d.sunset[0], this._tz) : '—';
+    const moonrise = d.moonrise && d.moonrise[0] ? Utils.formatTime(d.moonrise[0], this._tz) : '—';
+    const moonset = d.moonset && d.moonset[0] ? Utils.formatTime(d.moonset[0], this._tz) : '—';
+    const phase = d.moon_phase && d.moon_phase.length ? d.moon_phase[0] : null;
     const phaseRow = phase != null
       ? `${Utils.getMoonPhaseName(phase)} · ${Utils.getMoonIllumination(phase)}% illuminated`
       : '';
 
     const ARC = [[0,100],[10,78],[20,58],[30,42],[40,31],[50,28],[60,31],[70,42],[80,58],[90,78],[100,100]];
-    this._arc = { ARC, sunrise: d.sunrise && d.sunrise[0], sunset: d.sunset && d.sunset[0], moonrise: d.moonrise && d.moonrise[0], moonset: d.moonset && d.moonset[0] };
+    this._arc = { ARC, tz: this._tz, sunrise: d.sunrise && d.sunrise[0], sunset: d.sunset && d.sunset[0], moonrise: d.moonrise && d.moonrise[0], moonset: d.moonset && d.moonset[0] };
 
     const arcPos = (t) => {
       const seg = ARC.length - 1;
@@ -96,8 +95,8 @@ const UI = {
     };
     const arcFor = (rise, set) => {
       if (!rise || !set) return null;
-      const r = new Date(rise).getTime();
-      const s = new Date(set).getTime();
+      const r = Utils.parseLocal(rise, this._tz).getTime();
+      const s = Utils.parseLocal(set, this._tz).getTime();
       if (isNaN(r) || isNaN(s) || s <= r) return null;
       const t = (Date.now() - r) / (s - r);
       return { pos: arcPos(Math.max(0, Math.min(1, t))), below: t < 0 || t > 1 };
@@ -162,7 +161,7 @@ const UI = {
     const updated = this.$('currentUpdated');
     if (updated) updated.textContent = `Updated ${Utils.formatClock(new Date())}`;
     if (!this._arc) return;
-    const { ARC, sunrise, sunset, moonrise, moonset } = this._arc;
+    const { ARC, tz, sunrise, sunset, moonrise, moonset } = this._arc;
     const arcPos = (t) => {
       const seg = ARC.length - 1;
       const i = Math.max(0, Math.min(seg - 1, Math.floor(t * seg)));
@@ -173,8 +172,8 @@ const UI = {
     };
     const arcFor = (rise, set) => {
       if (!rise || !set) return null;
-      const r = new Date(rise).getTime();
-      const s = new Date(set).getTime();
+      const r = Utils.parseLocal(rise, tz).getTime();
+      const s = Utils.parseLocal(set, tz).getTime();
       if (isNaN(r) || isNaN(s) || s <= r) return null;
       const t = (Date.now() - r) / (s - r);
       return { pos: arcPos(Math.max(0, Math.min(1, t))), below: t < 0 || t > 1 };
@@ -214,7 +213,8 @@ const UI = {
     if (rainToday > 0) precipSub.push(`${rainToday}${units === 'imperial' ? '"' : ' mm'} rain`);
     if (snowToday > 0) precipSub.push(`${snowToday}cm snow`);
 
-    const windArrow = `<svg class="detail-box__arrow" viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform:rotate(${c.wind_direction_10m}deg)"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>`;
+    const windDir = Math.round(Number(c.wind_direction_10m)) || 0;
+    const windArrow = `<svg class="detail-box__arrow" viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform:rotate(${windDir}deg)"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>`;
 
     const uv = d.uv_index_max ? d.uv_index_max[0] : null;
     const uvInfo = uv != null ? Utils.getUVLevel(uv) : null;
@@ -237,9 +237,10 @@ const UI = {
       </div>
     `;
     if (aqC) {
-      const aqi = aqC.european_aqi || aqC.us_aqi || 0;
-      const aqLevel = Utils.getAQILevel(aqi);
-      const isEU = !!aqC.european_aqi;
+      const rawAqi = aqC.european_aqi != null ? aqC.european_aqi : aqC.us_aqi;
+      const aqi = rawAqi != null ? Math.round(Number(rawAqi)) : null;
+      const aqLevel = aqi != null && Number.isFinite(aqi) ? Utils.getAQILevel(aqi) : null;
+      const isEU = aqC.european_aqi != null;
       const chips = [
         ['PM2.5', aqC.pm2_5], ['PM10', aqC.pm10], ['NO₂', aqC.nitrogen_dioxide],
         ['O₃', aqC.ozone], ['SO₂', aqC.sulphur_dioxide], ['CO', aqC.carbon_monoxide],
@@ -249,7 +250,7 @@ const UI = {
       aqiBlock = `
         <div class="conditions-item conditions-item--wide">
           <span class="conditions-item__label">Air Quality · ${isEU ? 'European' : 'US'} AQI</span>
-          <span class="conditions-item__value"><span class="uv-badge" style="background:${aqLevel.color}">${aqi}</span> <span style="color:${aqLevel.color}">${aqLevel.label}</span></span>
+          <span class="conditions-item__value">${aqLevel ? `<span class="uv-badge" style="background:${aqLevel.color}">${aqi}</span> <span style="color:${aqLevel.color}">${aqLevel.label}</span>` : '<span class="uv-badge">—</span>'}</span>
           <div class="conditions-item__chips">${chips}</div>
         </div>
       `;
@@ -326,6 +327,8 @@ const UI = {
     const container = this.$('mapContainer');
     const section = this.$('mapSection');
     if (!container || !section) return;
+
+    lat = Math.max(-85, Math.min(85, lat));
 
     const tempColor = tempValue != null ? Utils.getTempColor(tempValue, units) : '';
 
@@ -526,13 +529,13 @@ const UI = {
     const now = Date.now();
     let startIdx = 0;
     for (let i = 0; i < hourly.time.length; i++) {
-      if (new Date(hourly.time[i]).getTime() >= now) { startIdx = i; break; }
+      if (Utils.parseLocal(hourly.time[i], this._tz).getTime() >= now) { startIdx = i; break; }
     }
     const windUnit = Utils.getWindUnit(UI.windUnit);
     const cards = hourly.time.slice(startIdx, startIdx + 12).map((time, i) => {
       const idx = startIdx + i;
       const temp = Utils.formatTemp(hourly.temperature_2m[idx], units);
-      const timeLabel = i === 0 ? 'Now' : Utils.formatHourShort(time);
+      const timeLabel = i === 0 ? 'Now' : Utils.formatHourShort(time, this._tz);
       const pop = hourly.precipitation_probability ? hourly.precipitation_probability[idx] : 0;
       const precip = hourly.precipitation ? hourly.precipitation[idx] : 0;
       const snow = hourly.snowfall ? hourly.snowfall[idx] : 0;
@@ -605,11 +608,11 @@ const UI = {
     const minGap = 76;
     const labelStep = [6, 8, 12, 24].find((s) => (iw * s) / times.length >= minGap) || 24;
     for (let i = 0; i < times.length; i += labelStep) {
-      xlabels += `<text x="${x(i).toFixed(1)}" y="${H - 12}" text-anchor="middle" font-size="18" font-weight="600" fill="currentColor" fill-opacity="0.9">${Utils.formatHourShort(times[i])}</text>`;
+      xlabels += `<text x="${x(i).toFixed(1)}" y="${H - 12}" text-anchor="middle" font-size="18" font-weight="600" fill="currentColor" fill-opacity="0.9">${Utils.formatHourShort(times[i], this._tz)}</text>`;
     }
     if (labelStep < 24) {
       const dayEnd = new Date(new Date(times[0]).getTime() + 86400000);
-      xlabels += `<text x="${x(times.length).toFixed(1)}" y="${H - 12}" text-anchor="end" font-size="18" font-weight="600" fill="currentColor" fill-opacity="0.9">${Utils.formatHourShort(dayEnd)}</text>`;
+      xlabels += `<text x="${x(times.length).toFixed(1)}" y="${H - 12}" text-anchor="end" font-size="18" font-weight="600" fill="currentColor" fill-opacity="0.9">${Utils.formatHourShort(dayEnd, this._tz)}</text>`;
     }
 
     let bars = '';
@@ -650,6 +653,7 @@ const UI = {
   renderWeather(weatherData, aqData, units, cityName, country, lat, lon, forecastDays) {
     this.hideLoading();
     this.hideError();
+    this._tz = weatherData && weatherData.timezone ? weatherData.timezone : null;
     weatherData._cityName = cityName;
     weatherData._country = country;
     this.$('weatherContent').classList.remove('hidden');
@@ -668,10 +672,12 @@ const UI = {
       : null;
     UI._mapTempValue = tempValue;
     if (lat != null && lon != null) {
+      const mapKey = (this._mapKey = (this._mapKey || 0) + 1);
       UI._mapTemps = [];
       this.renderMap(lat, lon, tempLabel, tempValue, units, []);
       API.getLocalTemps(lat, lon, units)
         .then((temps) => {
+          if (mapKey !== UI._mapKey) return;
           if (!temps || !temps.length) return;
           UI._mapTemps = temps;
           UI.renderMap(lat, lon, tempLabel, tempValue, units, temps);
@@ -706,7 +712,7 @@ const UI = {
   },
 
   initThemeToggle() {
-    const saved = localStorage.getItem('theme');
+    const saved = Utils.safeGet('theme', null);
     const isDark = saved === 'dark';
     document.body.classList.toggle('theme-dark', isDark);
     const icon = this.$('themeIcon');
@@ -716,8 +722,9 @@ const UI = {
   toggleTheme() {
     document.body.classList.toggle('theme-dark');
     const isDark = document.body.classList.contains('theme-dark');
-    localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    this.$('themeIcon').textContent = isDark ? '\u2600' : '\u263E';
+    Utils.safeSet('theme', isDark ? 'dark' : 'light');
+    const icon = this.$('themeIcon');
+    if (icon) icon.textContent = isDark ? '\u2600' : '\u263E';
   },
 
   _esc(str) {
