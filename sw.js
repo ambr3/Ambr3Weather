@@ -1,6 +1,6 @@
-const CACHE_NAME = 'ambr3weather-v0.3.3';
+const CACHE_NAME = 'ambr3weather-v0.3.5';
 const API_CACHE = 'ambr3weather-api-v1';
-const VERSION = 'v0.3.3';
+const VERSION = 'v0.3.5';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -100,7 +100,7 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(request).then((cached) => {
       const fetched = fetch(request).then((response) => {
-        if (response && response.status === 200) {
+        if (response && response.status === 200 && request.url.startsWith(self.location.origin)) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         }

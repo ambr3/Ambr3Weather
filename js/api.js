@@ -40,7 +40,7 @@ const API = {
       `latitude=${lat}`,
       `longitude=${lon}`,
       `current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day,surface_pressure,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,precipitation,visibility,dew_point_2m`,
-      `hourly=temperature_2m,apparent_temperature,weather_code,precipitation_probability,precipitation,snowfall,wind_speed_10m,is_day`,
+      `hourly=temperature_2m,apparent_temperature,weather_code,precipitation_probability,precipitation,snowfall,wind_speed_10m,wind_gusts_10m,relative_humidity_2m,is_day`,
       `daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,sunrise,sunset,moonrise,moonset,moon_phase,precipitation_sum,rain_sum,snowfall_sum,precipitation_hours,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,uv_index_max,sunshine_duration,daylight_duration`,
       `temperature_unit=${tempUnit}`,
       `wind_speed_unit=${windUnit || 'kmh'}`,
@@ -59,6 +59,7 @@ const API = {
 
   async getLocalTemps(lat, lon, units) {
     const tempUnit = units === 'imperial' ? 'fahrenheit' : 'celsius';
+    lat = Math.max(-85, Math.min(85, lat));
     const latD = CONFIG.TEMP_SPREAD;
     const lonScale = Math.max(0.7, Math.min(1.5, 1 / Math.cos((lat * Math.PI) / 180)));
     const lonD = latD * lonScale;

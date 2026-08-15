@@ -81,23 +81,23 @@ const WeatherIcons = {
   `),
 
   _rainDrops: (offsetX = 0) => `
-    <line x1="${18 + offsetX}" y1="50" x2="${16 + offsetX}" y2="56" stroke="#7EC8E3" stroke-width="2" stroke-linecap="round"/>
-    <line x1="${28 + offsetX}" y1="50" x2="${26 + offsetX}" y2="56" stroke="#7EC8E3" stroke-width="2" stroke-linecap="round"/>
-    <line x1="${38 + offsetX}" y1="50" x2="${36 + offsetX}" y2="56" stroke="#7EC8E3" stroke-width="2" stroke-linecap="round"/>
+    <line x1="${18 + offsetX}" y1="50" x2="${16 + offsetX}" y2="56" stroke="#C6EEFF" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="${28 + offsetX}" y1="50" x2="${26 + offsetX}" y2="56" stroke="#C6EEFF" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="${38 + offsetX}" y1="50" x2="${36 + offsetX}" y2="56" stroke="#C6EEFF" stroke-width="2.5" stroke-linecap="round"/>
   `,
 
   _drizzleDay: () => WeatherIcons._svg(`
     <circle cx="46" cy="16" r="7" fill="#FFD93D"/>
     ${WeatherIcons._cloudBase()}
-    <line x1="20" y1="50" x2="19" y2="54" stroke="#7EC8E3" stroke-width="1.5" stroke-linecap="round"/>
-    <line x1="30" y1="50" x2="29" y2="54" stroke="#7EC8E3" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="20" y1="50" x2="19" y2="54" stroke="#C6EEFF" stroke-width="2" stroke-linecap="round"/>
+    <line x1="30" y1="50" x2="29" y2="54" stroke="#C6EEFF" stroke-width="2" stroke-linecap="round"/>
   `),
 
   _drizzleNight: () => WeatherIcons._svg(`
     <path d="M48 10c-4 0-7 3-8 6.5 1-.3 2-.5 3-.5 3.5 0 6.5 3 6.5 6.5 0 1.5-.4 2.8-1 3.8.8-.5 1.5-1.5 1.5-2.8 0-4.5-3-8-7-8.5h5z" fill="#E8D44D" transform="translate(4,-2) scale(0.7)"/>
     ${WeatherIcons._cloudBase()}
-    <line x1="20" y1="50" x2="19" y2="54" stroke="#7EC8E3" stroke-width="1.5" stroke-linecap="round"/>
-    <line x1="30" y1="50" x2="29" y2="54" stroke="#7EC8E3" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="20" y1="50" x2="19" y2="54" stroke="#C6EEFF" stroke-width="2" stroke-linecap="round"/>
+    <line x1="30" y1="50" x2="29" y2="54" stroke="#C6EEFF" stroke-width="2" stroke-linecap="round"/>
   `),
 
   _rainDay: () => WeatherIcons._svg(`

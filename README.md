@@ -1,7 +1,6 @@
 # Ambr3Weather — Private Weather PWA
 
-Version. 0.3.1 (Beta)
-
+[v0.3.5] - 2026-08-15
 A privacy-first, open-source Weather web app. All data stays on your device — no servers, no accounts, no tracking.
 
 Why PWA? I hate loads of installed apps on my phone, that simple.
@@ -12,15 +11,6 @@ This is partially Vibe-Coded, I can code but not well, there's currently around 
 
 I would always recommend using Vanadium (GrapheneOS) or Brave Browser to install PWA's for max security. Please use at your own risk, as stated this has been vibe-coded and always check for security flaws before using.
 
-## Changelog
-
-### 0.3.1 (Beta)
-
-- **Local temperature map** — now samples and shows temperatures across a 20-mile radius around your location
-- **Map zoom** — the map automatically zooms to fit the temperature ring and fills the full card width
-- **Colour-coded temperature chart** — hotter temps in red, colder in blue (gradient line, gradient fill, and per-point coloured dots)
-- **Bigger Sun & Moon titles** in the current weather card
-- **Fixed** — map failing to render in some cases (NaN zoom calculation)
 
 ## Privacy
 
@@ -48,7 +38,7 @@ I would always recommend using Vanadium (GrapheneOS) or Brave Browser to install
 - **Static map** — OpenStreetMap tile with location pin and local temperatures
 - UV index with color-coded badge
 - 7-day or 14-day forecast with daily cards (tab toggle)
-- Hourly scroll (12 time slots, starts from current hour) with temperature chart
+- Hourly scroll with 24h / All tab toggle, plus a temperature/rain/wind/humidity chart with tab toggle
 - **Auto-refresh** — silently updates every 30 minutes
 - **Dark/light mode toggle** — saved between visits
 - Dynamic weather backgrounds (sunny, rainy, snowy, night, thunder, mist, etc.)

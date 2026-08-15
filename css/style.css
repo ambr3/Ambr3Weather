@@ -1043,6 +1043,13 @@ body.theme-dark.theme-mist { --color-bg-start: #1a1a2e; --color-bg-end: #2d2d44;
   text-align: right;
 }
 
+.pollen-legend {
+  margin-top: 0.5rem;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+}
+
 .uv-badge {
   display: inline-block;
   padding: 0.2rem 0.6rem;
@@ -1161,7 +1168,36 @@ body.theme-dark.theme-mist { --color-bg-start: #1a1a2e; --color-bg-end: #2d2d44;
   text-decoration: underline;
 }
 
+.map-wind {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: rgba(20, 40, 60, 0.55);
+  backdrop-filter: blur(6px);
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.map-wind__arrow {
+  flex: 0 0 auto;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
+}
+
 /* Hourly Chart */
+.chart-tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.8rem;
+}
+
 .hourly-chart {
   background: var(--color-card);
   border: 1px solid var(--color-card-border);
@@ -1180,6 +1216,22 @@ body.theme-dark.theme-mist { --color-bg-start: #1a1a2e; --color-bg-end: #2d2d44;
   color: var(--color-text);
 }
 
+.hourly-chart__legend {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.hourly-chart__legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: #7EC8E3;
+}
+
 /* Hourly Scroll */
 .hourly-section {
   margin-bottom: 2rem;
@@ -1190,7 +1242,7 @@ body.theme-dark.theme-mist { --color-bg-start: #1a1a2e; --color-bg-end: #2d2d44;
   gap: 0.8rem;
   overflow-x: auto;
   padding-bottom: 0.5rem;
-  scroll-snap-type: x mandatory;
+  scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: var(--color-card-border) transparent;
@@ -1221,12 +1273,21 @@ body.theme-dark.theme-mist { --color-bg-start: #1a1a2e; --color-bg-end: #2d2d44;
   text-align: center;
   backdrop-filter: blur(var(--blur));
   scroll-snap-align: start;
-  transition: transform 0.2s, background 0.2s;
+  transition: background 0.2s;
 }
 
 .hourly-card:hover {
-  transform: translateY(-2px);
   background: var(--color-card-hover);
+}
+
+.hourly-card__date {
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin-bottom: 0.2rem;
+  min-height: 1em;
 }
 
 .hourly-card__time {
@@ -1300,6 +1361,7 @@ body.theme-dark.theme-mist { --color-bg-start: #1a1a2e; --color-bg-end: #2d2d44;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: var(--color-card-border) transparent;
+  cursor: grab;
 }
 
 .forecast-cards::-webkit-scrollbar {
@@ -1361,9 +1423,12 @@ body.theme-dark.theme-mist { --color-bg-start: #1a1a2e; --color-bg-end: #2d2d44;
   flex-shrink: 0;
 }
 
-.forecast-card__icon svg {
+.forecast-card__icon svg,
+.hourly-card__icon svg {
   width: 100%;
   height: 100%;
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
 .forecast-card__main {

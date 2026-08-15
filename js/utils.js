@@ -62,6 +62,7 @@ const Utils = {
   },
 
   getWindDirection(deg) {
+    if (deg == null || !isFinite(deg)) return '—';
     const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
     return dirs[Math.round(deg / 45) % 8];
   },

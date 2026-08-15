@@ -1,6 +1,13 @@
 const UI = {
   $: (id) => document.getElementById(id),
 
+  _hourlyAll: false,
+  _chartMode: 'temp',
+
+  setHourlyRange(all) {
+    this._hourlyAll = all;
+  },
+
   showLoading() {
     this.$('loading').classList.remove('hidden');
     this.$('errorMessage').classList.add('hidden');
@@ -34,8 +41,11 @@ const UI = {
     const list = Array.isArray(alerts) ? alerts : [];
     const current = list.filter((a) => {
       if (!a.start || !a.end) return true;
+      const start = Utils.parseLocal(a.start, this._tz).getTime();
+      const end = Utils.parseLocal(a.end, this._tz).getTime();
+      if (isNaN(start) || isNaN(end)) return true;
       const now = Date.now();
-      return now >= new Date(a.start).getTime() && now <= new Date(a.end).getTime();
+      return now >= start && now <= end;
     });
     if (!current.length) {
       bar.classList.add('hidden');
@@ -66,6 +76,7 @@ const UI = {
   },
 
   renderCurrentWeather(data, units) {
+    if (!data || !data.current) return;
     const c = data.current;
     const d = data.daily || {};
     const icon = WeatherIcons.get(c.weather_code, c.is_day);
@@ -219,13 +230,19 @@ const UI = {
     const uv = d.uv_index_max ? d.uv_index_max[0] : null;
     const uvInfo = uv != null ? Utils.getUVLevel(uv) : null;
 
+    const windSpeed = c.wind_speed_10m != null ? Math.round(c.wind_speed_10m) : null;
+    const gustSpeed = c.wind_gusts_10m != null ? Math.round(c.wind_gusts_10m) : null;
+    const humidity = c.relative_humidity_2m != null ? Math.round(c.relative_humidity_2m) : null;
+    const pressure = c.surface_pressure != null ? Math.round(c.surface_pressure) : null;
+    const dewPoint = c.dew_point_2m != null ? Utils.formatTemp(c.dew_point_2m, units) : '—';
+
     const conditions = [
       { label: 'Precipitation', value: precipNow, sub: precipSub.length ? precipSub.join(' · ') : 'Dry today' },
-      { label: 'Wind', value: `${Math.round(c.wind_speed_10m)} ${windUnit}`, sub: `${windArrow}<span class="detail-box__dir">${Utils.getWindDirection(c.wind_direction_10m)}</span> · gusts ${Math.round(c.wind_gusts_10m)} ${windUnit}` },
-      { label: 'Humidity', value: `${c.relative_humidity_2m}%`, sub: `Dew point ${Utils.formatTemp(c.dew_point_2m, units)}` },
+      { label: 'Wind', value: windSpeed != null ? `${windSpeed} ${windUnit}` : '—', sub: `${windArrow}<span class="detail-box__dir">${Utils.getWindDirection(c.wind_direction_10m)}</span> · gusts ${gustSpeed != null ? `${gustSpeed} ${windUnit}` : '—'}` },
+      { label: 'Humidity', value: humidity != null ? `${humidity}%` : '—', sub: `Dew point ${dewPoint}` },
       { label: 'UV Index', value: uv != null ? `<span class="uv-badge" style="background:${uvInfo.color}">${Math.round(uv)}</span>` : '—', sub: uv != null ? uvInfo.label : 'Not available' },
       { label: 'Visibility', value: Utils.formatVisibility(c.visibility, UI.visUnit), sub: 'Current visibility' },
-      { label: 'Pressure', value: `${Math.round(c.surface_pressure)} hPa`, sub: 'Surface pressure' },
+      { label: 'Pressure', value: pressure != null ? `${pressure} hPa` : '—', sub: 'Surface pressure' },
     ];
 
     const aqC = aq && aq.current;
@@ -286,8 +303,9 @@ const UI = {
         <div class="conditions-item conditions-item--wide">
           <span class="conditions-item__label">Pollen</span>
           <span class="conditions-item__value"><span style="color:${pLevel.color}">${pLevel.label}</span></span>
-          <span class="conditions-item__sub">${top[0][0]} is highest</span>
+          <span class="conditions-item__sub">${top[0][0]} is highest · grains/m³</span>
           <div class="pollen-bars">${bars}</div>
+          <div class="pollen-legend">Low &lt;5 · Moderate 5–30 · High 30–100 · Very High &gt;100</div>
         </div>
       `;
     }
@@ -323,7 +341,7 @@ const UI = {
     container.classList.remove('hidden');
   },
 
-  renderMap(lat, lon, tempLabel, tempValue, units, temps) {
+  renderMap(lat, lon, tempLabel, tempValue, units, temps, windLabel, windDir) {
     const container = this.$('mapContainer');
     const section = this.$('mapSection');
     if (!container || !section) return;
@@ -422,6 +440,14 @@ const UI = {
         </div>
         <div class="map-temp" style="--temp-bg:${tempColor}" aria-hidden="true">${tempLabel || ''}</div>
         ${tempBadges}
+        ${windDir != null && windLabel ? `
+        <div class="map-wind" aria-hidden="true">
+          <svg class="map-wind__arrow" viewBox="0 0 24 24" width="20" height="20" style="transform:rotate(${(windDir + 180) % 360}deg)">
+            <path d="M12 19V5" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+            <path d="M5 11l7-7 7 7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </svg>
+          <span class="map-wind__value">${windLabel}</span>
+        </div>` : ''}
         <div class="map-attribution">
           <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a>
         </div>
@@ -435,16 +461,17 @@ const UI = {
   },
 
   renderForecast(daily, units, days) {
+    if (!daily || !daily.time || !daily.time.length) return;
     const start = days >= 14 ? 0 : 1;
     const end = days >= 14 ? 14 : 8;
     const windUnit = Utils.getWindUnit(UI.windUnit);
     const cards = daily.time.slice(start, end).map((date, i) => {
       const idx = start + i;
-      const max = Math.round(daily.temperature_2m_max[idx]);
-      const min = Math.round(daily.temperature_2m_min[idx]);
+      const max = daily.temperature_2m_max && daily.temperature_2m_max[idx] != null ? Math.round(daily.temperature_2m_max[idx]) : '—';
+      const min = daily.temperature_2m_min && daily.temperature_2m_min[idx] != null ? Math.round(daily.temperature_2m_min[idx]) : '—';
       const pop = daily.precipitation_probability_max ? Math.round(daily.precipitation_probability_max[idx] || 0) : 0;
-      const windMax = daily.wind_speed_10m_max ? Math.round(daily.wind_speed_10m_max[idx]) : null;
-      const gustMax = daily.wind_gusts_10m_max ? Math.round(daily.wind_gusts_10m_max[idx]) : null;
+      const windMax = daily.wind_speed_10m_max && daily.wind_speed_10m_max[idx] != null ? Math.round(daily.wind_speed_10m_max[idx]) : null;
+      const gustMax = daily.wind_gusts_10m_max && daily.wind_gusts_10m_max[idx] != null ? Math.round(daily.wind_gusts_10m_max[idx]) : null;
       const rainSum = daily.rain_sum ? daily.rain_sum[idx] : null;
       const snowSum = daily.snowfall_sum ? daily.snowfall_sum[idx] : null;
       const precipHours = daily.precipitation_hours ? daily.precipitation_hours[idx] : null;
@@ -499,11 +526,11 @@ const UI = {
             <div class="forecast-card__temps">
               <div class="forecast-card__temp-block">
                 <span class="forecast-card__temp-label">High</span>
-                <span class="forecast-card__high">${max}°</span>
+                <span class="forecast-card__high">${max}${max === '—' ? '' : '°'}</span>
               </div>
               <div class="forecast-card__temp-block">
                 <span class="forecast-card__temp-label">Low</span>
-                <span class="forecast-card__low">${min}°</span>
+                <span class="forecast-card__low">${min}${min === '—' ? '' : '°'}</span>
               </div>
             </div>
           </div>
@@ -526,31 +553,65 @@ const UI = {
   },
 
   renderHourly(hourly, units) {
+    if (!hourly || !hourly.time || !hourly.time.length) return;
     const now = Date.now();
     let startIdx = 0;
     for (let i = 0; i < hourly.time.length; i++) {
       if (Utils.parseLocal(hourly.time[i], this._tz).getTime() >= now) { startIdx = i; break; }
     }
     const windUnit = Utils.getWindUnit(UI.windUnit);
-    const cards = hourly.time.slice(startIdx, startIdx + 12).map((time, i) => {
+    const count = this._hourlyAll ? hourly.time.length - startIdx : 24;
+
+    let todayKey = null;
+    let tomorrowKey = null;
+    try {
+      const dtf = new Intl.DateTimeFormat('en-CA', {
+        timeZone: this._tz, year: 'numeric', month: '2-digit', day: '2-digit',
+      });
+      todayKey = dtf.format(new Date());
+      tomorrowKey = dtf.format(new Date(Date.now() + 86400000));
+    } catch {
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      todayKey = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+      const tom = new Date(now.getTime() + 86400000);
+      tomorrowKey = `${tom.getFullYear()}-${pad(tom.getMonth() + 1)}-${pad(tom.getDate())}`;
+    }
+
+    let prevKey = '';
+    const cards = hourly.time.slice(startIdx, startIdx + count).map((time, i) => {
       const idx = startIdx + i;
-      const temp = Utils.formatTemp(hourly.temperature_2m[idx], units);
+      const temp = hourly.temperature_2m && hourly.temperature_2m[idx] != null
+        ? Utils.formatTemp(hourly.temperature_2m[idx], units)
+        : '—';
       const timeLabel = i === 0 ? 'Now' : Utils.formatHourShort(time, this._tz);
-      const pop = hourly.precipitation_probability ? hourly.precipitation_probability[idx] : 0;
+      const pop = hourly.precipitation_probability ? hourly.precipitation_probability[idx] : null;
       const precip = hourly.precipitation ? hourly.precipitation[idx] : 0;
       const snow = hourly.snowfall ? hourly.snowfall[idx] : 0;
-      const wind = hourly.wind_speed_10m ? Math.round(hourly.wind_speed_10m[idx]) : null;
+      const wind = hourly.wind_speed_10m && hourly.wind_speed_10m[idx] != null ? Math.round(hourly.wind_speed_10m[idx]) : null;
       const icon = WeatherIcons.get(hourly.weather_code[idx], hourly.is_day ? hourly.is_day[idx] : 1);
+
+      const dateKey = time.slice(0, 10);
+      const showDate = i === 0 || dateKey !== prevKey;
+      prevKey = dateKey;
+      let dateLabel = '';
+      if (showDate) {
+        if (dateKey === todayKey) dateLabel = 'Today';
+        else if (dateKey === tomorrowKey) dateLabel = 'Tomorrow';
+        else dateLabel = Utils.parseLocal(time, this._tz)
+          .toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      }
 
       let precipVal = '—';
       if (snow > 0) precipVal = `${snow}cm`;
-      else if (pop > 0) precipVal = `${pop}%`;
       else if (precip > 0) precipVal = Utils.formatPrecip(precip, units) || '—';
+      else if (pop != null) precipVal = `${pop}%`;
 
       const windVal = wind != null ? `${wind} ${windUnit}` : '—';
 
       return `
         <div class="hourly-card" role="listitem">
+          <div class="hourly-card__date">${dateLabel}</div>
           <div class="hourly-card__time">${timeLabel}</div>
           <div class="hourly-card__icon">${icon}</div>
           <div class="hourly-card__temp">${temp}</div>
@@ -576,6 +637,9 @@ const UI = {
     if (!container || !hourly || !hourly.time) return;
 
     container.classList.remove('hidden');
+    const tabs = this.$('chartTabs');
+    if (tabs) tabs.classList.remove('hidden');
+
     const W = Math.max(320, container.clientWidth || 600);
     const H = 320;
     const padL = 58, padR = 16, padT = 30, padB = 48;
@@ -583,17 +647,54 @@ const UI = {
     const ih = H - padT - padB;
 
     const times = hourly.time.slice(0, 24);
-    const temps = hourly.temperature_2m.slice(0, 24);
+    const mode = this._chartMode;
+
     const pops = hourly.precipitation_probability ? hourly.precipitation_probability.slice(0, 24) : null;
 
-    const minT = Math.min(...temps);
-    const maxT = Math.max(...temps);
+    let cfg;
+    if (mode === 'rain') {
+      if (!pops) return;
+      cfg = {
+        min: 0, max: 100, suffix: '%',
+        bars: pops, barH: 1,
+        legend: [{ label: 'chance of rain', swatch: '#7EC8E3' }],
+      };
+    } else if (mode === 'wind') {
+      const u = Utils.getWindUnit(this.windUnit);
+      const mult = u === 'mph' ? 0.621371 : 1;
+      const vals = hourly.wind_speed_10m ? hourly.wind_speed_10m.slice(0, 24).map((v) => v * mult) : null;
+      if (!vals) return;
+      const gusts = hourly.wind_gusts_10m ? hourly.wind_gusts_10m.slice(0, 24).map((v) => v * mult) : null;
+      const all = gusts ? vals.concat(gusts) : vals;
+      cfg = {
+        values: vals, color: '#FFB74D', suffix: '',
+        gusts: gusts, gustColor: '#E08A2E',
+        min: Math.min(...all), max: Math.max(...all),
+        legend: [
+          { label: `Wind (${u})`, swatch: '#FFB74D' },
+          ...(gusts ? [{ label: `Gusts (${u})`, swatch: '#E08A2E' }] : []),
+        ],
+      };
+    } else if (mode === 'humidity') {
+      const vals = hourly.relative_humidity_2m ? hourly.relative_humidity_2m.slice(0, 24) : null;
+      if (!vals) return;
+      cfg = {
+        values: vals, color: '#1E88E5', suffix: '%',
+        legend: [{ label: 'Humidity (%)', swatch: '#1E88E5' }],
+      };
+    } else {
+      const vals = hourly.temperature_2m ? hourly.temperature_2m.slice(0, 24) : null;
+      if (!vals) return;
+      cfg = {
+        values: vals, suffix: '°', tempGrad: true,
+      };
+    }
+
+    const minT = cfg.min != null ? cfg.min : Math.min(...cfg.values);
+    const maxT = cfg.max != null ? cfg.max : Math.max(...cfg.values);
     const span = Math.max(1, maxT - minT);
     const y = (t) => padT + ih - ((t - minT) / span) * ih;
     const x = (i) => padL + (i / times.length) * iw;
-
-    const points = temps.map((t, i) => `${x(i).toFixed(1)},${y(t).toFixed(1)}`).join(' ');
-    const area = `${padL},${(padT + ih).toFixed(1)} ${points} ${x(times.length - 1).toFixed(1)},${(padT + ih).toFixed(1)}`;
 
     let grid = '';
     const ticks = 4;
@@ -601,7 +702,7 @@ const UI = {
       const t = minT + (span * i) / ticks;
       const yy = y(t).toFixed(1);
       grid += `<line x1="${padL}" y1="${yy}" x2="${W - padR}" y2="${yy}" stroke="currentColor" stroke-opacity="0.12"/>
-               <text x="${padL - 12}" y="${+yy + 6}" text-anchor="end" font-size="18" font-weight="600" fill="currentColor" fill-opacity="0.9">${Math.round(t)}°</text>`;
+               <text x="${padL - 12}" y="${+yy + 6}" text-anchor="end" font-size="18" font-weight="600" fill="currentColor" fill-opacity="0.9">${Math.round(t)}${cfg.suffix}</text>`;
     }
 
     let xlabels = '';
@@ -611,49 +712,84 @@ const UI = {
       xlabels += `<text x="${x(i).toFixed(1)}" y="${H - 12}" text-anchor="middle" font-size="18" font-weight="600" fill="currentColor" fill-opacity="0.9">${Utils.formatHourShort(times[i], this._tz)}</text>`;
     }
     if (labelStep < 24) {
-      const dayEnd = new Date(new Date(times[0]).getTime() + 86400000);
+      const dayEnd = new Date(Utils.parseLocal(times[0], this._tz).getTime() + 86400000);
       xlabels += `<text x="${x(times.length).toFixed(1)}" y="${H - 12}" text-anchor="end" font-size="18" font-weight="600" fill="currentColor" fill-opacity="0.9">${Utils.formatHourShort(dayEnd, this._tz)}</text>`;
     }
 
     let bars = '';
-    if (pops) {
+    if (cfg.bars) {
       const barW = (iw / times.length) * 0.55;
-      pops.forEach((p, i) => {
+      cfg.bars.forEach((p, i) => {
         if (p > 0) {
-          const bh = (p / 100) * ih * 0.4;
-          bars += `<rect x="${(x(i) - barW / 2).toFixed(1)}" y="${(H - padB - bh).toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="2" fill="#7EC8E3" fill-opacity="0.7"/>`;
+          const bh = (p / 100) * ih * (cfg.barH || 0.4);
+          bars += `<rect x="${(x(i) - barW / 2).toFixed(1)}" y="${(H - padB - bh).toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="2" fill="#7EC8E3" stroke="rgba(255,255,255,0.9)" stroke-width="1"/>`;
         }
       });
     }
 
-    const gradStops = [1, 0.75, 0.5, 0.25, 0].map((f) => {
-      const t = minT + span * f;
-      return `<stop offset="${Math.round(f * 100)}%" stop-color="${Utils.getTempColor(t, units)}"/>`;
-    }).join('');
+    let line = '', dots = '', defs = '';
+    if (cfg.values) {
+      const points = cfg.values.map((t, i) => `${x(i).toFixed(1)},${y(t).toFixed(1)}`).join(' ');
+      const area = `${padL},${(padT + ih).toFixed(1)} ${points} ${x(times.length - 1).toFixed(1)},${(padT + ih).toFixed(1)}`;
+      const gustPoints = cfg.gusts ? cfg.gusts.map((t, i) => `${x(i).toFixed(1)},${y(t).toFixed(1)}`).join(' ') : '';
+      if (cfg.tempGrad) {
+        const gradStops = [1, 0.75, 0.5, 0.25, 0].map((f) => {
+          const t = minT + span * f;
+          return `<stop offset="${Math.round(f * 100)}%" stop-color="${Utils.getTempColor(t, units)}"/>`;
+        }).join('');
+        defs = `<linearGradient id="tempGrad" x1="0" y1="0" x2="0" y2="1">${gradStops}</linearGradient>`;
+        line = `<polygon points="${area}" fill="url(#tempGrad)" fill-opacity="0.22"/>
+                <polyline points="${points}" fill="none" stroke="url(#tempGrad)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+        dots = cfg.values.map((t, i) =>
+          `<circle cx="${x(i).toFixed(1)}" cy="${y(t).toFixed(1)}" r="4" fill="${Utils.getTempColor(t, units)}" stroke="rgba(255,255,255,0.85)" stroke-width="1.2"/>`
+        ).join('');
+      } else {
+        line = `<polygon points="${area}" fill="${cfg.color}" fill-opacity="0.15"/>
+                <polyline points="${points}" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+                <polyline points="${points}" fill="none" stroke="${cfg.color}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`;
+        if (gustPoints) {
+          line += `<polyline points="${gustPoints}" fill="none" stroke="${cfg.gustColor}" stroke-width="3" stroke-dasharray="8 5" stroke-linecap="round" stroke-linejoin="round"/>`;
+        }
+        dots = cfg.values.map((t, i) =>
+          `<circle cx="${x(i).toFixed(1)}" cy="${y(t).toFixed(1)}" r="4" fill="${cfg.color}" stroke="rgba(255,255,255,0.85)" stroke-width="1.2"/>`
+        ).join('');
+      }
+    }
 
-    const dots = temps.map((t, i) =>
-      `<circle cx="${x(i).toFixed(1)}" cy="${y(t).toFixed(1)}" r="4" fill="${Utils.getTempColor(t, units)}" stroke="rgba(255,255,255,0.85)" stroke-width="1.2"/>`
-    ).join('');
-
+    const modeLabel = mode === 'rain' ? 'Rain' : mode === 'wind' ? 'Wind' : mode === 'humidity' ? 'Humidity' : 'Temperature';
     container.innerHTML = `
       <svg viewBox="0 0 ${W} ${H}" class="hourly-chart__svg" role="img"
-           aria-label="24-hour temperature trend with precipitation probability">
-        <defs>
-          <linearGradient id="tempGrad" x1="0" y1="0" x2="0" y2="1">${gradStops}</linearGradient>
-        </defs>
+           aria-label="24-hour ${modeLabel} chart">
+        <defs>${defs}</defs>
         ${grid}
         ${xlabels}
-        ${bars}
-        <polygon points="${area}" fill="url(#tempGrad)" fill-opacity="0.22"/>
-        <polyline points="${points}" fill="none" stroke="url(#tempGrad)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+        ${line}
         ${dots}
-      </svg>`;
+        ${bars}
+      </svg>
+      ${cfg.legend && cfg.legend.length ? `
+        <div class="hourly-chart__legend">
+          ${cfg.legend.map((l) => `<span class="hourly-chart__legend-swatch" style="background:${l.swatch}"></span>${l.label}`).join('')}
+        </div>` : ''}`;
+  },
+
+  setChartMode(mode) {
+    this._chartMode = ['temp', 'rain', 'wind', 'humidity'].includes(mode) ? mode : 'temp';
+    const map = { temp: 'chartTempBtn', rain: 'chartRainBtn', wind: 'chartWindBtn', humidity: 'chartHumidityBtn' };
+    Object.keys(map).forEach((k) => {
+      const btn = this.$(map[k]);
+      if (!btn) return;
+      const on = k === this._chartMode;
+      btn.classList.toggle('is-active', on);
+      btn.setAttribute('aria-selected', String(on));
+    });
   },
 
   renderWeather(weatherData, aqData, units, cityName, country, lat, lon, forecastDays) {
+    if (!weatherData) return;
     this.hideLoading();
     this.hideError();
-    this._tz = weatherData && weatherData.timezone ? weatherData.timezone : null;
+    this._tz = weatherData.timezone ? weatherData.timezone : null;
     weatherData._cityName = cityName;
     weatherData._country = country;
     this.$('weatherContent').classList.remove('hidden');
@@ -671,16 +807,25 @@ const UI = {
       ? weatherData.current.temperature_2m
       : null;
     UI._mapTempValue = tempValue;
+    const windUnit = Utils.getWindUnit(this.windUnit);
+    const windKmh = weatherData.current && weatherData.current.wind_speed_10m != null
+      ? weatherData.current.wind_speed_10m
+      : null;
+    const windSpeed = windKmh != null ? Math.round(windKmh * (windUnit === 'mph' ? 0.621371 : 1)) : null;
+    UI._mapWindLabel = windSpeed != null ? `${windSpeed} ${windUnit}` : '';
+    UI._mapWindDir = weatherData.current && weatherData.current.wind_direction_10m != null
+      ? Math.round(weatherData.current.wind_direction_10m)
+      : null;
     if (lat != null && lon != null) {
       const mapKey = (this._mapKey = (this._mapKey || 0) + 1);
       UI._mapTemps = [];
-      this.renderMap(lat, lon, tempLabel, tempValue, units, []);
+      this.renderMap(lat, lon, tempLabel, tempValue, units, [], UI._mapWindLabel, UI._mapWindDir);
       API.getLocalTemps(lat, lon, units)
         .then((temps) => {
           if (mapKey !== UI._mapKey) return;
           if (!temps || !temps.length) return;
           UI._mapTemps = temps;
-          UI.renderMap(lat, lon, tempLabel, tempValue, units, temps);
+          UI.renderMap(lat, lon, tempLabel, tempValue, units, temps, UI._mapWindLabel, UI._mapWindDir);
         })
         .catch(() => {});
     } else {

@@ -3,6 +3,8 @@ const App = {
   windUnit: Utils.safeGet('windUnit', null) || (Utils.safeGet('units', null) === 'imperial' ? 'mph' : 'kmh'),
   visUnit: Utils.safeGet('visUnit', null) || 'km',
   forecastDays: parseInt(Utils.safeGet('forecastDays', ''), 10) === 14 ? 14 : 7,
+  hourlyAll: Utils.safeGet('hourlyAll', '') === '1',
+  chartMode: Utils.safeGet('chartMode', 'temp') || 'temp',
   lastCity: Utils.safeGet('lastCity', null),
   lastCountry: Utils.safeGet('lastCountry', '') || '',
   lastLat: parseFloat(Utils.safeGet('lastLat', '')),
@@ -85,6 +87,20 @@ const App = {
     this.$('fc14Btn').addEventListener('click', () => this.setForecastDays(14));
     this.updateForecastTabs();
 
+    this.$('h24Btn').addEventListener('click', () => this.setHourlyRange(false));
+    this.$('hAllBtn').addEventListener('click', () => this.setHourlyRange(true));
+    this.updateHourlyTabs();
+    UI.setHourlyRange(this.hourlyAll);
+
+    this.$('chartTempBtn').addEventListener('click', () => this.setChartMode('temp'));
+    this.$('chartRainBtn').addEventListener('click', () => this.setChartMode('rain'));
+    this.$('chartWindBtn').addEventListener('click', () => this.setChartMode('wind'));
+    this.$('chartHumidityBtn').addEventListener('click', () => this.setChartMode('humidity'));
+    UI.setChartMode(this.chartMode);
+
+    this.enableDragScroll('forecastCards');
+    this.enableDragScroll('hourlyScroll');
+
     this.$('locationBtn').addEventListener('click', () => this.useLocation());
     this.$('themeToggle').addEventListener('click', () => UI.toggleTheme());
 
@@ -113,8 +129,6 @@ const App = {
       this.$('installBanner').classList.remove('hidden');
     });
 
-    this.initGestures();
-
     window.addEventListener('online', () => UI.markOffline(false));
     window.addEventListener('offline', () => UI.markOffline(true));
 
@@ -122,7 +136,7 @@ const App = {
       if (!this._last) return;
       UI.renderHourlyChart(this._last.weather.hourly, this._last.units);
       if (this._last.lat != null && this._last.lon != null) {
-        UI.renderMap(this._last.lat, this._last.lon, UI._mapTemp || '', UI._mapTempValue, this._last.units, UI._mapTemps || []);
+        UI.renderMap(this._last.lat, this._last.lon, UI._mapTemp || '', UI._mapTempValue, this._last.units, UI._mapTemps || [], UI._mapWindLabel || '', UI._mapWindDir);
       }
     }, 250));
 
@@ -315,9 +329,9 @@ const App = {
   reloadCurrent() {
     if (Number.isFinite(this.lastLat) && Number.isFinite(this.lastLon)) {
       const name = this.lastCity || 'Current Location';
-      this.loadWeather(this.lastLat, this.lastLon, name, this.lastCountry || '', name);
+      this.loadWeather(this.lastLat, this.lastLon, name, this.lastCountry || '', name).catch(() => {});
     } else if (this.lastCity) {
-      this.searchCity(this.lastCity);
+      this.searchCity(this.lastCity).catch(() => {});
     }
   },
 
@@ -338,6 +352,38 @@ const App = {
     btn14.classList.toggle('is-active', is14);
     btn7.setAttribute('aria-selected', String(!is14));
     btn14.setAttribute('aria-selected', String(is14));
+  },
+
+  setHourlyRange(all) {
+    if (this.hourlyAll === all) return;
+    this.hourlyAll = all;
+    Utils.safeSet('hourlyAll', all ? '1' : '');
+    this.updateHourlyTabs();
+    UI.setHourlyRange(all);
+    if (this._last && this._last.weather) {
+      UI.renderHourly(this._last.weather.hourly, this.units);
+    }
+  },
+
+  updateHourlyTabs() {
+    const btn24 = this.$('h24Btn');
+    const btnAll = this.$('hAllBtn');
+    if (!btn24 || !btnAll) return;
+    btn24.classList.toggle('is-active', !this.hourlyAll);
+    btnAll.classList.toggle('is-active', this.hourlyAll);
+    btn24.setAttribute('aria-selected', String(!this.hourlyAll));
+    btnAll.setAttribute('aria-selected', String(this.hourlyAll));
+  },
+
+  setChartMode(mode) {
+    if (!['temp', 'rain', 'wind', 'humidity'].includes(mode)) return;
+    if (this.chartMode === mode) return;
+    this.chartMode = mode;
+    Utils.safeSet('chartMode', mode);
+    UI.setChartMode(mode);
+    if (this._last && this._last.weather) {
+      UI.renderHourlyChart(this._last.weather.hourly, this.units);
+    }
   },
 
   async loadWeather(lat, lon, name, country, cityKey) {
@@ -412,58 +458,43 @@ const App = {
     );
   },
 
-  initGestures() {
-    const hourlyScroll = this.$('hourlyScroll');
-    if (!hourlyScroll) return;
+  enableDragScroll(id) {
+    const el = this.$(id);
+    if (!el) return;
 
-    let startX = 0;
-    let scrollLeft = 0;
-    let isDragging = false;
+    let touchSeen = false;
+    el.addEventListener('touchstart', () => { touchSeen = true; }, { once: true, passive: true });
 
-    hourlyScroll.addEventListener('touchstart', (e) => {
-      startX = e.touches[0].pageX - hourlyScroll.offsetLeft;
-      scrollLeft = hourlyScroll.scrollLeft;
-      isDragging = true;
-    }, { passive: true });
+    let active = false;
+    let lastX = 0;
 
-    hourlyScroll.addEventListener('touchmove', (e) => {
-      if (!isDragging) return;
-      const x = e.touches[0].pageX - hourlyScroll.offsetLeft;
-      const walk = (x - startX) * 1.5;
-      hourlyScroll.scrollLeft = scrollLeft - walk;
-    }, { passive: true });
-
-    hourlyScroll.addEventListener('touchend', () => {
-      isDragging = false;
-    }, { passive: true });
-
-    let mouseDown = false;
-    let mouseStartX = 0;
-    let mouseScrollLeft = 0;
-
-    hourlyScroll.addEventListener('mousedown', (e) => {
-      mouseDown = true;
-      mouseStartX = e.pageX - hourlyScroll.offsetLeft;
-      mouseScrollLeft = hourlyScroll.scrollLeft;
-      hourlyScroll.style.cursor = 'grabbing';
-    });
-
-    hourlyScroll.addEventListener('mouseleave', () => {
-      mouseDown = false;
-      hourlyScroll.style.cursor = '';
-    });
-
-    hourlyScroll.addEventListener('mouseup', () => {
-      mouseDown = false;
-      hourlyScroll.style.cursor = '';
-    });
-
-    hourlyScroll.addEventListener('mousemove', (e) => {
-      if (!mouseDown) return;
+    el.addEventListener('mousedown', (e) => {
+      if (touchSeen || e.button !== 0) return;
+      if (el.scrollWidth <= el.clientWidth) return;
+      active = true;
+      lastX = e.clientX;
+      el.style.cursor = 'grabbing';
+      el.style.userSelect = 'none';
+      el.style.scrollSnapType = 'none';
+      el.style.webkitScrollSnapType = 'none';
       e.preventDefault();
-      const x = e.pageX - hourlyScroll.offsetLeft;
-      const walk = (x - mouseStartX) * 1.5;
-      hourlyScroll.scrollLeft = mouseScrollLeft - walk;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!active) return;
+      e.preventDefault();
+      const dx = e.clientX - lastX;
+      lastX = e.clientX;
+      el.scrollLeft -= dx;
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (!active) return;
+      active = false;
+      el.style.cursor = '';
+      el.style.userSelect = '';
+      el.style.scrollSnapType = '';
+      el.style.webkitScrollSnapType = '';
     });
   },
 
