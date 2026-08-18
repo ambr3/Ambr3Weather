@@ -1,7 +1,7 @@
 # Ambr3Weather — Testing Checklist
 
 Tested in Brave, opened locally via `index.html` (file://). After deployment, re-verify
-on the live site.
+on the live site. **v0.3.16**
 
 ## A. Drag scrolling
 - [ ] Forecast cards: click+hold on a card with the mouse, drag left/right — strip scrolls smoothly with the pointer (no snapping, no judder)
@@ -56,8 +56,8 @@ on the live site.
 - [ ] After first load, JS/CSS served from cache (check versioned `?v=` URLs)
 
 ## H. Before any push
-- [ ] Footer shows v0.3.5
-- [ ] All `?v=` asset refs, `sw.js` CACHE_NAME, `offline.html` say v0.3.5 (bump together)
+- [ ] Footer shows v0.3.14
+- [ ] All `?v=` asset refs, `sw.js` CACHE_NAME, `offline.html` say v0.3.14 (bump together)
 - [ ] No leftover 0.3.3 / 0.3.4 strings
 - [ ] Deploy all files from `ver 0.3.2/` (index.html, sw.js, offline.html, manifest.json, js/*, css/*, assets/*)
 - [ ] Verify live footer shows the new version before testing the live site

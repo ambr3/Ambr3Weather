@@ -12,7 +12,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(self), gyroscope=(), magnetometer=(), payment=(), usb=()">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests; connect-src https://api.open-meteo.com https://air-quality-api.open-meteo.com https://geocoding-api.open-meteo.com; img-src 'self' https://tile.openstreetmap.org; style-src 'self' 'unsafe-inline'; script-src 'self';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests; connect-src https://api.open-meteo.com https://air-quality-api.open-meteo.com https://geocoding-api.open-meteo.com https://archive-api.open-meteo.com; img-src 'self' https://tile.openstreetmap.org; style-src 'self' 'unsafe-inline'; script-src 'self';">
 
   <title>Ambr3Weather — Private Weather</title>
 
@@ -20,8 +20,8 @@
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
   <link rel="icon" type="image/svg+xml" href="assets/icons/icon-192.svg">
 
-  <link rel="stylesheet" href="css/style.css?v=0.3.5">
-  <link rel="stylesheet" href="css/responsive.css?v=0.3.5">
+  <link rel="stylesheet" href="css/style.css?v=0.3.18">
+  <link rel="stylesheet" href="css/responsive.css?v=0.3.18">
   <link rel="preconnect" href="https://api.open-meteo.com">
   <link rel="preconnect" href="https://air-quality-api.open-meteo.com">
   <link rel="preconnect" href="https://geocoding-api.open-meteo.com">
@@ -42,6 +42,7 @@
         <path d="m19.07 4.93-1.41 1.41"></path>
       </svg>
       <h1>Ambr3Weather</h1>
+      <span class="header__attribution">Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a> · <a href="https://open-meteo.com/license" target="_blank" rel="noopener noreferrer">CC BY 4.0</a></span>
     </div>
     <div class="header__controls">
       <button class="icon-btn" id="helpToggle" aria-label="How to use" aria-expanded="false">
@@ -53,6 +54,9 @@
       </button>
       <button class="icon-btn" id="themeToggle" aria-label="Toggle dark mode">
         <span id="themeIcon">☾</span>
+      </button>
+      <button class="icon-btn icon-btn--text" id="dynamicTextToggle" aria-label="Toggle dynamic text color" aria-pressed="false">
+        <span class="dynamic-label">Dyn</span>
       </button>
       <div class="units-menu" id="unitsMenu">
         <button class="unit-toggle" id="unitMenuBtn" aria-label="Units" aria-expanded="false">
@@ -179,6 +183,8 @@
         <div class="hourly-chart hidden" id="hourlyChart" aria-label="Hourly chart"></div>
       </section>
 
+      <section class="historic-section hidden" id="historicSection" aria-label="Historical weather"></section>
+
       <section class="detail-section hidden" id="detailGrid" aria-label="Weather details"></section>
 
     </div>
@@ -186,12 +192,13 @@
 
   <footer class="footer">
     <p>
-      Ambr3Weather v0.3.5 &mdash; No tracking. No ads. No cookies.
+      Ambr3Weather v0.3.18 &mdash; No tracking. No ads. No cookies.
       <br>
-      Powered by <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a>.
+      Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo.com</a> &mdash; <a href="https://open-meteo.com/license" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>.
       Map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>.
-      <a href="https://github.com/ambr3/Ambr3Weather" target="_blank" rel="noopener noreferrer">      Open source</a> under GPL.
+      <a href="https://github.com/ambr3/Ambr3Weather" target="_blank" rel="noopener noreferrer">Open source</a> under GPL.
     </p>
+    <p>Made with ❤️ 🇬🇧</p>
   </footer>
 
   <div class="install-banner hidden" id="installBanner">
@@ -200,11 +207,11 @@
     <button class="install-dismiss" id="installDismiss" aria-label="Dismiss">&times;</button>
   </div>
 
-  <script src="js/config.js?v=0.3.5"></script>
-  <script src="js/utils.js?v=0.3.5"></script>
-  <script src="js/icons.js?v=0.3.5"></script>
-  <script src="js/api.js?v=0.3.5"></script>
-  <script src="js/ui.js?v=0.3.5"></script>
-  <script src="js/app.js?v=0.3.5"></script>
+  <script src="js/config.js?v=0.3.18"></script>
+  <script src="js/utils.js?v=0.3.18"></script>
+  <script src="js/icons.js?v=0.3.18"></script>
+  <script src="js/api.js?v=0.3.18"></script>
+  <script src="js/ui.js?v=0.3.18"></script>
+  <script src="js/app.js?v=0.3.18"></script>
 </body>
 </html>

@@ -2,6 +2,17 @@
 
 All notable changes to Ambr3Weather are documented here.
 
+## [v0.3.18] - 2026-08-18
+
+### Fixed
+- **CRITICAL**: `document.body.className = theme` wiped all body classes on every weather load, destroying the `dynamic-text` state. Now uses `classList` to preserve user toggles.
+- Removed dead `@keyframes tempShine` CSS animation (defined but never referenced).
+- Removed false "Weather alerts" claim from README — Open-Meteo does not support alerts.
+
+### Security
+- Full security + robustness audit across 19 categories — all clean.
+- All unhandled promise rejections guarded, async race conditions blocked via `_weatherSeq`/`_searchSeq` counters, all `localStorage` wrapped in try/catch, CSP verified in both HTML files and `.htaccess`, no XSS surfaces, no secrets, reverse tabnabbing protected, clickjacking blocked.
+
 ## [v0.3.5] - 2026-08-15
 
 ### Added

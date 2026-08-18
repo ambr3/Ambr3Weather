@@ -24,14 +24,6 @@ const API = {
     }));
   },
 
-  async geocode(city) {
-    const url = `${CONFIG.GEOCODING_BASE}/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`;
-    const data = await this.fetchJSON(url);
-    if (!data.results || !data.results.length) throw new Error('City not found. Check the spelling.');
-    const r = data.results[0];
-    return { lat: r.latitude, lon: r.longitude, name: r.name, country: r.country_code, tz: r.timezone };
-  },
-
   async getWeather(lat, lon, units, windUnit, forecastDays) {
     const tempUnit = units === 'imperial' ? 'fahrenheit' : 'celsius';
     const precipUnit = units === 'imperial' ? 'inch' : 'mm';
@@ -64,9 +56,10 @@ const API = {
     const lonScale = Math.max(0.7, Math.min(1.5, 1 / Math.cos((lat * Math.PI) / 180)));
     const lonD = latD * lonScale;
     const offsets = [
-      [-latD, -lonD], [-latD, 0], [-latD, lonD],
-      [0, -lonD], [0, lonD],
-      [latD, -lonD], [latD, 0], [latD, lonD],
+      [-latD * 0.7, 0],
+      [0, lonD * 0.9],
+      [latD * 0.8, 0],
+      [0, -lonD * 0.75],
     ];
     const lats = offsets.map(([dLat]) => (lat + dLat).toFixed(5)).join(',');
     const lons = offsets.map(([, dLon]) => (lon + dLon).toFixed(5)).join(',');
@@ -95,5 +88,74 @@ const API = {
       `timezone=auto`,
     ];
     return this.fetchJSON(`${CONFIG.AIR_QUALITY_BASE}/v1/air-quality?${params.join('&')}`);
+  },
+
+  async getHistoric(lat, lon, units) {
+    const now = new Date();
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yStr = yesterday.toISOString().slice(0, 10);
+    const month = yesterday.getMonth();
+    const day = yesterday.getDate();
+
+    const years = [];
+    for (let y = yesterday.getFullYear() - 10; y <= yesterday.getFullYear(); y++) {
+      years.push(y);
+    }
+    const firstYear = years[0];
+    const lastYear = years[years.length - 1];
+
+    const archiveStart = `${firstYear}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const archiveEnd = `${lastYear}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+    const tempUnit = units === 'imperial' ? 'fahrenheit' : 'celsius';
+    const precipUnit = units === 'imperial' ? 'inch' : 'mm';
+    const params = [
+      `latitude=${lat}`,
+      `longitude=${lon}`,
+      `start_date=${archiveStart}`,
+      `end_date=${archiveEnd}`,
+      `daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max`,
+      `temperature_unit=${tempUnit}`,
+      `precipitation_unit=${precipUnit}`,
+      `timezone=auto`,
+    ];
+
+    const data = await this.fetchJSON(`https://archive-api.open-meteo.com/v1/archive?${params.join('&')}`);
+    if (!data || !data.daily || !data.daily.time) return null;
+
+    const maxTemps = data.daily.temperature_2m_max;
+    const minTemps = data.daily.temperature_2m_min;
+    const precipVals = data.daily.precipitation_sum;
+    const windVals = data.daily.wind_speed_10m_max;
+
+    const avgMax = maxTemps.filter(v => v != null);
+    const avgMin = minTemps.filter(v => v != null);
+    const avgPrecip = precipVals.filter(v => v != null);
+    const avgWind = windVals.filter(v => v != null);
+
+    const mean = arr => arr.length ? Math.round(arr.reduce((s, v) => s + v, 0) / arr.length) : null;
+    const max = arr => arr.length ? Math.round(Math.max(...arr)) : null;
+    const min = arr => arr.length ? Math.round(Math.min(...arr)) : null;
+
+    const lastIdx = maxTemps.length - 1;
+    const actualHigh = maxTemps[lastIdx] != null ? Math.round(maxTemps[lastIdx]) : null;
+    const actualLow = minTemps[lastIdx] != null ? Math.round(minTemps[lastIdx]) : null;
+    const actualPrecip = precipVals[lastIdx] != null ? (Math.round(precipVals[lastIdx] * 10) / 10) : null;
+    const actualWind = windVals[lastIdx] != null ? Math.round(windVals[lastIdx]) : null;
+
+    return {
+      date: yStr,
+      actualHigh,
+      actualLow,
+      actualPrecip,
+      actualWind,
+      avgHigh: mean(avgMax),
+      avgLow: mean(avgMin),
+      recordHigh: max(avgMax),
+      recordLow: min(avgMin),
+      avgPrecip: avgPrecip.length ? (Math.round(avgPrecip.reduce((s, v) => s + v, 0) / avgPrecip.length * 10) / 10) : null,
+      avgWind: mean(avgWind),
+    };
   },
 };

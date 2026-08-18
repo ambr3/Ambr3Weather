@@ -47,16 +47,24 @@ const App = {
     });
 
     document.addEventListener('click', (e) => {
+      if (e.target.id === 'dynamicTextToggle' || e.target.closest('#dynamicTextToggle')) {
+        const on = document.body.classList.toggle('dynamic-text');
+        Utils.safeSet('dynamicText', on ? 'on' : 'off');
+        const btn = document.getElementById('dynamicTextToggle');
+        if (btn) btn.setAttribute('aria-pressed', String(on));
+        this.updateDynamicText();
+        return;
+      }
       if (!e.target.closest('.search-form') && !e.target.closest('.search-dropdown')) {
         this.hideDropdown();
       }
+      if (!e.target.closest('.units-menu')) this.closeUnitsMenu();
     });
 
     this.$('unitToggle').addEventListener('click', () => {
       this.units = this.units === 'metric' ? 'imperial' : 'metric';
       Utils.safeSet('units', this.units);
       UI.setUnitLabel(this.units);
-      UI.setUnitMenuLabel(this.units);
       this.reloadCurrent();
     });
 
@@ -79,9 +87,6 @@ const App = {
       e.stopPropagation();
       this.toggleUnitsMenu();
     });
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('.units-menu')) this.closeUnitsMenu();
-    });
 
     this.$('fc7Btn').addEventListener('click', () => this.setForecastDays(7));
     this.$('fc14Btn').addEventListener('click', () => this.setForecastDays(14));
@@ -102,7 +107,15 @@ const App = {
     this.enableDragScroll('hourlyScroll');
 
     this.$('locationBtn').addEventListener('click', () => this.useLocation());
-    this.$('themeToggle').addEventListener('click', () => UI.toggleTheme());
+    this.$('themeToggle').addEventListener('click', () => {
+      UI.toggleTheme();
+      this.updateDynamicText();
+    });
+
+    if (Utils.safeGet('dynamicText') === 'on') {
+      document.body.classList.add('dynamic-text');
+      requestAnimationFrame(() => this.updateDynamicText());
+    }
 
     this.$('helpToggle').addEventListener('click', () => this.toggleInstructions(true));
     this.$('helpClose').addEventListener('click', () => this.toggleInstructions(false));
@@ -171,6 +184,22 @@ const App = {
     this._refreshTimer = setInterval(() => this.refreshSilently(), 30 * 60 * 1000);
   },
 
+  updateDynamicText() {
+    document.body.classList.remove('auto-dark', 'auto-light');
+    if (!document.body.classList.contains('dynamic-text')) return;
+    const cs = getComputedStyle(document.body);
+    const bg = cs.getPropertyValue('--color-bg-start').trim();
+    if (!bg) return;
+    const hex = bg.replace('#', '');
+    if (hex.length < 6) return;
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    if (isNaN(r) || isNaN(g) || isNaN(b)) return;
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    document.body.classList.add(luminance > 0.55 ? 'auto-dark' : 'auto-light');
+  },
+
   async refreshSilently() {
     if (!Number.isFinite(this.lastLat) || !Number.isFinite(this.lastLon)) return;
     if (!navigator.onLine) return;
@@ -193,6 +222,9 @@ const App = {
         if (seq === this._weatherSeq) UI.renderAlerts(alerts);
       }).catch(() => {});
       UI.renderWeather(weather, aq, units, city, country, lat, lon, forecastDays);
+      API.getHistoric(lat, lon, units).then((historic) => {
+        if (seq === this._weatherSeq) UI.renderHistoricSection(historic, units);
+      }).catch(() => {});
       this._last = { weather, aq, units, name: city, country, lat, lon, forecastDays };
       Utils.saveWeatherCache({ savedAt: Date.now(), units, name: city, country, lat, lon, weather, aq });
     } catch (e) {
@@ -260,7 +292,7 @@ const App = {
     const displayName = r.name || 'Location';
     this.$('searchInput').value = displayName;
     this.hideDropdown();
-    this.fetchAndRender(displayName, r.lat, r.lon, displayName, r.country);
+    this.loadWeather(r.lat, r.lon, displayName, r.country, displayName).catch(() => {});
   },
 
   hideDropdown() {
@@ -305,9 +337,11 @@ const App = {
     const seq = ++this._weatherSeq;
     UI.showLoading();
     try {
-      const geo = await API.geocode(city);
+      const results = await API.searchCities(city);
       if (seq !== this._weatherSeq) return;
-      await this.fetchAndRender(city, geo.lat, geo.lon, geo.name, geo.country);
+      if (!results.length) throw new Error('City not found. Check the spelling.');
+      const geo = results[0];
+      await this.loadWeather(geo.lat, geo.lon, geo.name, geo.country, geo.name);
     } catch (err) {
       if (seq !== this._weatherSeq) return;
       const cached = Utils.loadWeatherCache();
@@ -318,12 +352,6 @@ const App = {
         UI.showError(err && err.message ? err.message : 'Something went wrong.');
       }
     }
-  },
-
-  async fetchAndRender(city, lat, lon, geoName, geoCountry) {
-    const name = geoName || city;
-    const country = geoCountry || '';
-    await this.loadWeather(lat, lon, name, country, name);
   },
 
   reloadCurrent() {
@@ -417,6 +445,10 @@ const App = {
     if (seq !== this._weatherSeq) return;
 
     UI.renderWeather(weather, aq, this.units, name, country, lat, lon, this.forecastDays);
+    API.getHistoric(lat, lon, this.units).then((historic) => {
+      if (seq !== this._weatherSeq) return;
+      UI.renderHistoricSection(historic, this.units);
+    }).catch(() => {});
     this._last = { weather, aq, units: this.units, name, country, lat, lon, forecastDays: this.forecastDays };
     this.lastCity = cityKey;
     this.lastCountry = country;

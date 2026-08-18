@@ -30,10 +30,6 @@
     right: 1.5rem;
   }
 
-  .current-weather {
-    position: relative;
-  }
-
   .current-weather__temp {
     font-size: 3.2rem;
   }
@@ -125,6 +121,10 @@
 
   .header__controls {
     margin-left: auto;
+  }
+
+  .header__attribution {
+    display: none;
   }
 
   .header__logo svg {
@@ -219,19 +219,6 @@
     height: 38px;
   }
 
-  .forecast-card__weekday {
-    font-size: 1rem;
-  }
-
-  .forecast-card__date {
-    font-size: 0.78rem;
-  }
-
-  .forecast-card__high,
-  .forecast-card__low {
-    font-size: 1.45rem;
-  }
-
   .forecast-card__main {
     gap: 0.8rem;
   }
@@ -248,20 +235,8 @@
     font-size: 0.68rem;
   }
 
-  .forecast-card__rain-value {
-    font-size: 1.05rem;
-  }
-
   .forecast-card__rain-label {
     font-size: 0.7rem;
-  }
-
-  .forecast-card__stat-value {
-    font-size: 0.92rem;
-  }
-
-  .forecast-card__stat-sub {
-    font-size: 0.75rem;
   }
 
   .hourly-card {
@@ -269,25 +244,13 @@
     padding: 0.8rem 0.4rem;
   }
 
-  .hourly-card__time {
-    font-size: 0.95rem;
-  }
-
   .hourly-card__icon {
     width: 40px;
     height: 40px;
   }
 
-  .hourly-card__temp {
-    font-size: 1.2rem;
-  }
-
   .hourly-card__stat-value {
     font-size: 0.85rem;
-  }
-
-  .sun-arc__svg {
-    max-width: 280px;
   }
 
   .section-title {

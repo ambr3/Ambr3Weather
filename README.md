@@ -1,13 +1,15 @@
 # Ambr3Weather — Private Weather PWA
 
-[v0.3.5] - 2026-08-15
 A privacy-first, open-source Weather web app. All data stays on your device — no servers, no accounts, no tracking.
+Hi, I’m ambr3. I build open source projects because I genuinely like doing it. I also enjoy figuring things out, making something useful, most the projects i make are for my self but i also put it out there for others.
 
-Why PWA? I hate loads of installed apps on my phone, that simple.
+I’m also a privacy advocate. That shows in the projects i make: no trackers, no unnecessary cookies, just software that respects people.
 
-Why make this? I could not find any open source PWA apps that suited me.
+This isn’t my day job. My projects are vibe-coded assisted. Can i code.. Yes! is my code great.. No. I use it to get momentum and keep going, otherwise I’d get stuck, lose focus, and drop the project. I make no apologies for using it
 
-This is partially Vibe-Coded, I can code but not well, there's currently around 4000 odd lines of code, something i could not do on my own. AI helps me allot to get my ideas into real things, without AI by the time Ive coded something, I've either got bored or i just cant get the code to work.
+Thanks for stopping by. If you like privacy-friendly open source, you’re in the right place. Feel free to explore, star, or fork.
+
+Fun FAQ I started coding on Qbasic (shows my age). Why the name ambr3? couldn't think of i profile name, there was a sun-cream bottle in front of me with it written on so i used that.
 
 I would always recommend using Vanadium (GrapheneOS) or Brave Browser to install PWA's for max security. Please use at your own risk, as stated this has been vibe-coded and always check for security flaws before using.
 
@@ -33,7 +35,6 @@ I would always recommend using Vanadium (GrapheneOS) or Brave Browser to install
 - Current weather (temp, feels-like, humidity, pressure, wind, precipitation, UV index, visibility)
 - **Air quality index** — EU/US AQI with PM2.5, PM10, NO₂, O₃, SO₂, CO breakdown
 - **Pollen forecast** — levels for alder, birch, grass, mugwort, olive, and ragweed
-- **Weather alerts** — severe weather warnings from Open-Meteo
 - **Sunrise/sunset arc** — live SVG visualization showing the sun and moon position throughout the day
 - **Static map** — OpenStreetMap tile with location pin and local temperatures
 - UV index with color-coded badge
