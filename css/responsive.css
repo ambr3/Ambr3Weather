@@ -34,6 +34,15 @@
     font-size: 3.2rem;
   }
 
+  .current-weather__temp-row {
+    gap: 0.6rem;
+  }
+
+  .current-weather__summary {
+    font-size: 0.78rem;
+    padding: 0.25rem 0.55rem;
+  }
+
   .detail-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
@@ -117,6 +126,7 @@
   .header {
     flex-wrap: wrap;
     gap: 0.5rem;
+    justify-content: center;
   }
 
   .header__controls {
@@ -124,12 +134,22 @@
   }
 
   .header__attribution {
-    display: none;
+    display: block;
+    width: 100%;
+    font-size: 0.55rem;
+    text-align: center;
+    flex-basis: 100%;
+    order: 3;
+    margin-top: -0.2rem;
   }
 
   .header__logo svg {
     width: 24px;
     height: 24px;
+  }
+
+  .header__logo {
+    flex-wrap: wrap;
   }
 
   .header__logo h1 {
@@ -146,6 +166,15 @@
 
   .current-weather__temp {
     font-size: 3rem;
+  }
+
+  .current-weather__temp-row {
+    gap: 0.5rem;
+  }
+
+  .current-weather__summary {
+    font-size: 0.72rem;
+    padding: 0.2rem 0.45rem;
   }
 
   .current-weather__feels {

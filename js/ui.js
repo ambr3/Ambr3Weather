@@ -111,6 +111,17 @@ const UI = {
       ? `${Utils.getMoonPhaseName(phase)} · ${Utils.getMoonIllumination(phase)}% illuminated`
       : '';
 
+    const dayHigh = d.temperature_2m_max && d.temperature_2m_max[0] != null ? Utils.formatTemp(d.temperature_2m_max[0], units) : null;
+    const dayLow = d.temperature_2m_min && d.temperature_2m_min[0] != null ? Utils.formatTemp(d.temperature_2m_min[0], units) : null;
+    const dayPop = d.precipitation_probability_max ? Math.round(d.precipitation_probability_max[0] || 0) : null;
+    const windUnit = Utils.getWindUnit(UI.windUnit);
+    const dayWind = c.wind_speed_10m != null ? `${Math.round(c.wind_speed_10m)} ${windUnit}` : null;
+    const summaryParts = [];
+    if (dayHigh && dayLow) summaryParts.push(`High ${dayHigh} / Low ${dayLow}`);
+    if (dayPop != null) summaryParts.push(`${dayPop}% rain`);
+    if (dayWind) summaryParts.push(`Wind ${dayWind}`);
+    const daySummary = summaryParts.length ? summaryParts.join(' · ') : '';
+
     const ARC = [[0,100],[10,78],[20,58],[30,42],[40,31],[50,28],[60,31],[70,42],[80,58],[90,78],[100,100]];
     this._arc = { ARC, tz: this._tz, sunrise: d.sunrise && d.sunrise[0], sunset: d.sunset && d.sunset[0], moonrise: d.moonrise && d.moonrise[0], moonset: d.moonset && d.moonset[0] };
     this._arcData = this._arc;
@@ -128,7 +139,10 @@ const UI = {
         </div>
         <div class="current-weather__icon${c.is_day === 0 ? ' is-night' : ''}">${icon}</div>
       </div>
-      <div class="current-weather__temp">${temp}</div>
+      <div class="current-weather__temp-row">
+        <div class="current-weather__temp">${temp}</div>
+        ${daySummary ? `<div class="current-weather__summary">${daySummary}</div>` : ''}
+      </div>
       <div class="current-weather__feels">Feels like ${feels}</div>
       <div class="current-weather__updated" id="currentUpdated">Updated ${Utils.formatClock(new Date())}</div>
       <div class="current-weather__celestial">
@@ -216,8 +230,10 @@ const UI = {
     if (rainToday > 0) precipSub.push(`${rainToday}${units === 'imperial' ? '"' : ' mm'} rain`);
     if (snowToday > 0) precipSub.push(`${snowToday}cm snow`);
 
-    const windDir = Math.round(Number(c.wind_direction_10m)) || 0;
-    const windArrow = `<svg class="detail-box__arrow" viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform:rotate(${windDir}deg)"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>`;
+    const windDir = c.wind_direction_10m != null ? Math.round(c.wind_direction_10m) : null;
+    const windArrow = windDir != null
+      ? `<svg class="detail-box__arrow" viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform:rotate(${windDir}deg)"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>`
+      : '';
 
     const uv = d.uv_index_max ? d.uv_index_max[0] : null;
     const uvInfo = uv != null ? Utils.getUVLevel(uv) : null;
@@ -279,14 +295,15 @@ const UI = {
     `;
     if (pollenPresent.length && pollenPresent.some(([, v]) => v > 0)) {
       const top = [...pollenPresent].sort((a, b) => b[1] - a[1]);
-      const maxVal = top[0][1];
-      const pLevel = Utils.getPollenLevel(maxVal);
+      const pLevel = Utils.getPollenLevel(top[0][1]);
+      const pollenColors = { Low: '#5fb84d', Moderate: '#ff9800', High: '#f44336', 'Very High': '#880e4f' };
+      const barColor = pollenColors[pLevel.label] || '#5fb84d';
       const bars = top.slice(0, 3).map(([label, v]) => {
-        const pct = Math.max(4, Math.round((v / maxVal) * 100));
+        const pct = Math.max(2, Math.round((v / 100) * 100));
         return `
           <div class="pollen-row">
             <span class="pollen-row__label">${label}</span>
-            <span class="pollen-row__bar"><span class="pollen-row__fill" style="width:${pct}%"></span></span>
+            <span class="pollen-row__bar"><span class="pollen-row__fill" style="width:${pct}%;background:${barColor}"></span></span>
             <span class="pollen-row__value">${Math.round(v)}</span>
           </div>
         `;
@@ -333,7 +350,7 @@ const UI = {
     container.classList.remove('hidden');
   },
 
-  renderMap(lat, lon, tempLabel, tempValue, units, temps, windLabel, windDir) {
+  renderMap(lat, lon, tempLabel, tempValue, units, temps, windLabel, windDir, weatherCode, isDay) {
     const container = this.$('mapContainer');
     const section = this.$('mapSection');
     if (!container || !section) return;
@@ -344,25 +361,11 @@ const UI = {
 
     const tileSize = 256;
     const maxWidth = container.clientWidth || 600;
-    const padH = 16;
-    const padV = 36;
-    const budgetW = Math.max(300, maxWidth - padH * 2);
-    const budgetH = 728;
 
-    const latRad = (lat * Math.PI) / 180;
-    const lonScale = Math.max(0.7, Math.min(1.5, 1 / Math.cos(latRad)));
-    const dLat = CONFIG.TEMP_SPREAD;
-    const dLon = dLat * lonScale;
-
-    const merc = (la) => Math.log(Math.tan((la * Math.PI) / 180) + 1 / Math.cos((la * Math.PI) / 180));
-    const kH = (((merc(lat + dLat) - merc(lat - dLat)) / Math.PI) / 2) * tileSize;
-    const kW = ((2 * dLon) / 360) * tileSize;
-
-    const zW = Math.floor(Math.log2(budgetW / kW));
-    const zH = Math.floor(Math.log2(budgetH / kH));
-    const zoom = Math.max(8, Math.min(14, Math.min(zW, zH)));
+    const zoom = 12;
     const n = Math.pow(2, zoom);
 
+    const latRad = (lat * Math.PI) / 180;
     const xt = ((lon + 180) / 360) * n;
     const yt = ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * n;
 
@@ -371,25 +374,8 @@ const UI = {
     const fx = xt - centerTx;
     const fy = yt - centerTy;
 
-    const toX = (lo) => ((lo + 180) / 360) * n;
-    const toY = (la) => ((1 - Math.log(Math.tan((la * Math.PI) / 180) + 1 / Math.cos((la * Math.PI) / 180)) / Math.PI) / 2) * n;
-
-    const tempPoints = temps && temps.length ? temps : null;
-    const probe = tempPoints || [
-      { lat: lat - dLat, lon: lon - dLon }, { lat: lat - dLat, lon: lon }, { lat: lat - dLat, lon: lon + dLon },
-      { lat, lon: lon - dLon }, { lat, lon: lon + dLon },
-      { lat: lat + dLat, lon: lon - dLon }, { lat: lat + dLat, lon: lon }, { lat: lat + dLat, lon: lon + dLon },
-    ];
-
-    let minDy = 0, maxDy = 0;
-    probe.forEach((p) => {
-      const dy = (toY(p.lat) - yt) * tileSize;
-      minDy = Math.min(minDy, dy);
-      maxDy = Math.max(maxDy, dy);
-    });
-
     const mapWidth = maxWidth;
-    const mapHeight = Math.max(200, Math.min(Math.ceil(maxDy - minDy) + padV * 2, 800));
+    const mapHeight = Math.max(200, Math.min(400, maxWidth * 0.6));
 
     section.classList.remove('hidden');
 
@@ -415,33 +401,23 @@ const UI = {
       }
     }
 
-    let tempBadges = '';
-    if (tempPoints) {
-      tempPoints.forEach((p) => {
-        const px = (toX(p.lon) - startTx) * tileSize + offX;
-        const py = (toY(p.lat) - startTy) * tileSize + offY;
-        if (px < -10 || py < -10 || px > mapWidth + 10 || py > mapHeight + 10) return;
-        tempBadges += `<div class="map-temp map-temp--small" style="left:${px.toFixed(1)}px; top:${py.toFixed(1)}px; --temp-bg:${p.color}">${p.label}</div>`;
-      });
-    }
+    const windDirDeg = windDir != null ? Math.round(windDir) : null;
+    const windArrowSvg = windDirDeg != null
+      ? `<svg class="map-badge__arrow" viewBox="0 0 24 24" width="16" height="16" style="transform:rotate(${windDirDeg}deg)"><path d="M12 19V5" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none"/><path d="M5 12l7-7 7 7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`
+      : '';
 
     container.innerHTML = `
       <div class="map-view" style="height:${mapHeight}px">
         <div class="map-tiles" style="grid-template-columns:repeat(${cols}, ${tileSize}px); left:${offX}px; top:${offY}px">
           ${tiles}
         </div>
-        <div class="map-temp" style="--temp-bg:${tempColor}" aria-hidden="true">${tempLabel || ''}</div>
-        ${tempBadges}
-        ${windDir != null && windLabel ? `
-        <div class="map-wind" aria-hidden="true">
-          <svg class="map-wind__arrow" viewBox="0 0 24 24" width="28" height="28" style="transform:rotate(${(windDir + 180) % 360}deg)">
-            <path d="M12 19V5" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-            <path d="M5 11l7-7 7 7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-          </svg>
-          <span class="map-wind__value">${windLabel}</span>
-        </div>` : ''}
+        <div class="map-badge" style="--temp-bg:${tempColor}" aria-hidden="true">
+          <span class="map-badge__icon">${WeatherIcons.get(weatherCode || 0, isDay !== 0)}</span>
+          <span class="map-badge__temp">${tempLabel || ''}</span>
+          ${windArrowSvg}
+        </div>
         <div class="map-attribution">
-          <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a>
+          <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">&copy; OpenStreetMap</a>
         </div>
       </div>
     `;
@@ -464,14 +440,13 @@ const UI = {
       const gustMax = daily.wind_gusts_10m_max && daily.wind_gusts_10m_max[i] != null ? Math.round(daily.wind_gusts_10m_max[i]) : null;
       const rainSum = daily.rain_sum ? daily.rain_sum[i] : null;
       const snowSum = daily.snowfall_sum ? daily.snowfall_sum[i] : null;
-      const precipHours = daily.precipitation_hours ? daily.precipitation_hours[i] : null;
       const sunshine = daily.sunshine_duration ? daily.sunshine_duration[i] : null;
       const weatherCode = daily.weather_code[i];
       const icon = WeatherIcons.get(weatherCode, true);
 
-      const d = new Date(date + 'T00:00:00');
-      const weekday = i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' });
-      const dateLabel = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const d = Utils.parseLocal(date + 'T00:00:00', this._tz);
+      const weekday = i === 0 ? 'Today' : d.toLocaleDateString('en-US', { timeZone: this._tz || undefined, weekday: 'short' });
+      const dateLabel = d.toLocaleDateString('en-US', { timeZone: this._tz || undefined, month: 'short', day: 'numeric' });
 
       const windStat = windMax != null
         ? `<div class="forecast-card__stat">
@@ -487,7 +462,6 @@ const UI = {
       let precipSub = 'dry';
       if (snowSum != null && snowSum > 0) { precipVal = `${snowSum}cm`; precipSub = 'snow'; }
       else if (rainSum != null && rainSum > 0) { precipVal = Utils.formatPrecip(rainSum, units) || '—'; precipSub = 'rain'; }
-      else if (precipHours != null && precipHours > 0) { precipVal = `${Math.round(precipHours)}h`; precipSub = 'wet'; }
 
       const sunStat = sunshine != null
         ? `<div class="forecast-card__stat">
@@ -556,9 +530,9 @@ const UI = {
       return units === 'imperial' ? `${(v * 0.0393701).toFixed(1)} in` : `${v} mm`;
     };
 
-    const yesterday = data.date ? new Date(data.date + 'T00:00:00') : null;
+    const yesterday = data.date ? Utils.parseLocal(data.date + 'T00:00:00', this._tz) : null;
     const dateLabel = yesterday
-      ? yesterday.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+      ? yesterday.toLocaleDateString('en-US', { timeZone: this._tz || undefined, weekday: 'short', month: 'short', day: 'numeric' })
       : 'Yesterday';
 
     const diff = (data.actualHigh != null && data.avgHigh != null)
@@ -572,7 +546,7 @@ const UI = {
       <div class="historic-card" id="historicToggle" role="button" tabindex="0" aria-expanded="false">
         <div class="historic-card__header">
           <div class="historic-card__main">
-            <span class="historic-card__label">Historical</span>
+            <span class="historic-card__label">Yesterday's Weather</span>
             <span class="historic-card__date">${dateLabel}</span>
           </div>
           <div class="historic-card__temps">
@@ -583,28 +557,37 @@ const UI = {
         </div>
         <span class="historic-card__more" id="historicMore">Tap for more</span>
         <div class="historic-card__detail hidden" id="historicDetail">
+          <div class="historic-detail__note">Averages and records are based on 10 years of data for this date.</div>
           <div class="historic-detail__row">
-            <span class="historic-detail__label">Record high</span>
-            <span class="historic-detail__value historic-detail__value--high">${temp(data.recordHigh)}</span>
+            <span class="historic-detail__label">Yesterday's high</span>
+            <span class="historic-detail__value historic-detail__value--high">${temp(data.actualHigh)}</span>
           </div>
           <div class="historic-detail__row">
-            <span class="historic-detail__label">Record low</span>
-            <span class="historic-detail__value historic-detail__value--low">${temp(data.recordLow)}</span>
+            <span class="historic-detail__label">Yesterday's low</span>
+            <span class="historic-detail__value historic-detail__value--low">${temp(data.actualLow)}</span>
           </div>
           <div class="historic-detail__row">
-            <span class="historic-detail__label">Avg high</span>
+            <span class="historic-detail__label">10-year avg high</span>
             <span class="historic-detail__value">${temp(data.avgHigh)}</span>
           </div>
           <div class="historic-detail__row">
-            <span class="historic-detail__label">Avg low</span>
+            <span class="historic-detail__label">10-year avg low</span>
             <span class="historic-detail__value">${temp(data.avgLow)}</span>
+          </div>
+          <div class="historic-detail__row">
+            <span class="historic-detail__label">Record high (10yr)</span>
+            <span class="historic-detail__value historic-detail__value--high">${temp(data.recordHigh)}</span>
+          </div>
+          <div class="historic-detail__row">
+            <span class="historic-detail__label">Record low (10yr)</span>
+            <span class="historic-detail__value historic-detail__value--low">${temp(data.recordLow)}</span>
           </div>
           <div class="historic-detail__row">
             <span class="historic-detail__label">Avg precip</span>
             <span class="historic-detail__value">${precip(data.avgPrecip)}</span>
           </div>
           <div class="historic-detail__row">
-            <span class="historic-detail__label">Yesterday precip</span>
+            <span class="historic-detail__label">Yesterday's precip</span>
             <span class="historic-detail__value">${precip(data.actualPrecip)}</span>
           </div>
         </div>
@@ -659,8 +642,6 @@ const UI = {
         : '—';
       const timeLabel = i === 0 ? 'Now' : Utils.formatHourShort(time, this._tz);
       const pop = hourly.precipitation_probability ? hourly.precipitation_probability[idx] : null;
-      const precip = hourly.precipitation ? hourly.precipitation[idx] : 0;
-      const snow = hourly.snowfall ? hourly.snowfall[idx] : 0;
       const wind = hourly.wind_speed_10m && hourly.wind_speed_10m[idx] != null ? Math.round(hourly.wind_speed_10m[idx]) : null;
       const icon = WeatherIcons.get(hourly.weather_code[idx], hourly.is_day ? hourly.is_day[idx] : 1);
 
@@ -676,9 +657,7 @@ const UI = {
       }
 
       let precipVal = '—';
-      if (snow > 0) precipVal = `${snow}cm`;
-      else if (precip > 0) precipVal = Utils.formatPrecip(precip, units) || '—';
-      else if (pop != null) precipVal = `${pop}%`;
+      if (pop != null) precipVal = `${pop}%`;
 
       const windVal = wind != null ? `${wind} ${windUnit}` : '—';
       const humidity = hourly.relative_humidity_2m && hourly.relative_humidity_2m[idx] != null ? `${Math.round(hourly.relative_humidity_2m[idx])}%` : '—';
@@ -900,19 +879,10 @@ const UI = {
       ? Math.round(weatherData.current.wind_direction_10m)
       : null;
     if (lat != null && lon != null) {
-      const mapKey = (this._mapKey = (this._mapKey || 0) + 1);
-      UI._mapTemps = [];
-      this.renderMap(lat, lon, tempLabel, tempValue, units, [], UI._mapWindLabel, UI._mapWindDir);
-      API.getLocalTemps(lat, lon, units)
-        .then((temps) => {
-          if (mapKey !== UI._mapKey) return;
-          if (!temps || !temps.length) return;
-          UI._mapTemps = temps;
-          UI.renderMap(lat, lon, tempLabel, tempValue, units, temps, UI._mapWindLabel, UI._mapWindDir);
-        })
-        .catch(() => {});
+      const weatherCode = weatherData.current && weatherData.current.weather_code != null ? weatherData.current.weather_code : 0;
+      const isDay = weatherData.current && weatherData.current.is_day != null ? weatherData.current.is_day : 1;
+      this.renderMap(lat, lon, tempLabel, tempValue, units, [], UI._mapWindLabel, UI._mapWindDir, weatherCode, isDay);
     } else {
-      UI._mapTemps = [];
       this.hideMap();
     }
   },

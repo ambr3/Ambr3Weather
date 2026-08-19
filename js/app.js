@@ -149,7 +149,8 @@ const App = {
       if (!this._last) return;
       UI.renderHourlyChart(this._last.weather.hourly, this._last.units);
       if (this._last.lat != null && this._last.lon != null) {
-        UI.renderMap(this._last.lat, this._last.lon, UI._mapTemp || '', UI._mapTempValue, this._last.units, UI._mapTemps || [], UI._mapWindLabel || '', UI._mapWindDir);
+        const c = this._last.weather.current || {};
+        UI.renderMap(this._last.lat, this._last.lon, UI._mapTemp || '', UI._mapTempValue, this._last.units, [], UI._mapWindLabel || '', UI._mapWindDir, c.weather_code || 0, c.is_day);
       }
     }, 250));
 

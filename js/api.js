@@ -49,37 +49,6 @@ const API = {
     return data.alerts && data.alerts.length ? data.alerts : [];
   },
 
-  async getLocalTemps(lat, lon, units) {
-    const tempUnit = units === 'imperial' ? 'fahrenheit' : 'celsius';
-    lat = Math.max(-85, Math.min(85, lat));
-    const latD = CONFIG.TEMP_SPREAD;
-    const lonScale = Math.max(0.7, Math.min(1.5, 1 / Math.cos((lat * Math.PI) / 180)));
-    const lonD = latD * lonScale;
-    const offsets = [
-      [-latD * 0.7, 0],
-      [0, lonD * 0.9],
-      [latD * 0.8, 0],
-      [0, -lonD * 0.75],
-    ];
-    const lats = offsets.map(([dLat]) => (lat + dLat).toFixed(5)).join(',');
-    const lons = offsets.map(([, dLon]) => (lon + dLon).toFixed(5)).join(',');
-    const url = `${CONFIG.WEATHER_BASE}/v1/forecast?latitude=${lats}&longitude=${lons}&current=temperature_2m&forecast_days=1&temperature_unit=${tempUnit}&timezone=auto`;
-    const data = await this.fetchJSON(url);
-    const list = Array.isArray(data) ? data : [data];
-    return offsets.map(([dLat, dLon], i) => {
-      const row = list[i];
-      const temp = row && row.current ? row.current.temperature_2m : null;
-      if (temp == null) return null;
-      return {
-        lat: lat + dLat,
-        lon: lon + dLon,
-        temp,
-        label: `${Math.round(temp)}°`,
-        color: Utils.getTempColor(temp, units),
-      };
-    }).filter(Boolean);
-  },
-
   async getAirQuality(lat, lon) {
     const params = [
       `latitude=${lat}`,
