@@ -1438,6 +1438,7 @@ body.theme-dark.theme-mist { --color-bg-start: #1a1a2e; --color-bg-end: #2d2d44;
   backdrop-filter: blur(var(--blur));
   cursor: pointer;
   transition: background 0.15s;
+  overflow: hidden;
 }
 
 .historic-card:hover {
@@ -1448,12 +1449,14 @@ body.theme-dark.theme-mist { --color-bg-start: #1a1a2e; --color-bg-end: #2d2d44;
   display: flex;
   align-items: center;
   gap: 0.8rem;
+  flex-wrap: wrap;
 }
 
 .historic-card__main {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .historic-card__label {
@@ -1475,6 +1478,7 @@ body.theme-dark.theme-mist { --color-bg-start: #1a1a2e; --color-bg-end: #2d2d44;
   gap: 0.6rem;
   font-size: 1.5rem;
   font-weight: 700;
+  min-width: 0;
 }
 
 .historic-card__hi {
@@ -1492,6 +1496,9 @@ body.theme-dark.theme-mist { --color-bg-start: #1a1a2e; --color-bg-end: #2d2d44;
   font-size: 0.78rem;
   color: var(--color-text-muted);
   margin-left: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .historic-card__more {

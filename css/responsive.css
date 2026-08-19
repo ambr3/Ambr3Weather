@@ -290,6 +290,20 @@
     flex-wrap: wrap;
     font-size: 0.85rem;
   }
+
+  .historic-card__header {
+    gap: 0.5rem;
+  }
+
+  .historic-card__temps {
+    font-size: 1.3rem;
+  }
+
+  .historic-card__diff {
+    flex-basis: 100%;
+    text-align: right;
+    white-space: normal;
+  }
 }
 
 @media (min-width: 1024px) {
