@@ -36,7 +36,7 @@ I would always recommend using Vanadium (GrapheneOS) or Brave Browser to install
 - **Air quality index** — EU/US AQI with PM2.5, PM10, NO₂, O₃, SO₂, CO breakdown
 - **Pollen forecast** — levels for alder, birch, grass, mugwort, olive, and ragweed
 - **Sunrise/sunset arc** — live SVG visualization showing the sun and moon position throughout the day
-- **Static map** — OpenStreetMap tile with location pin and local temperatures
+- **Static map** — OpenStreetMap tile with location pin
 - UV index with color-coded badge
 - 7-day or 14-day forecast with daily cards (tab toggle)
 - Hourly scroll with 24h / All tab toggle, plus a temperature/rain/wind/humidity chart with tab toggle

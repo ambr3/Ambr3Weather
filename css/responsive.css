@@ -53,7 +53,7 @@
   }
 
   .hourly-card {
-    width: 122px;
+    width: 132px;
     padding: 0.85rem 0.45rem;
   }
 
@@ -269,8 +269,8 @@
   }
 
   .hourly-card {
-    width: 112px;
-    padding: 0.8rem 0.4rem;
+    width: 140px;
+    padding: 0.8rem 0.45rem;
   }
 
   .hourly-card__icon {
@@ -280,6 +280,10 @@
 
   .hourly-card__stat-value {
     font-size: 0.85rem;
+  }
+
+  .hourly-card__stat {
+    padding: 0.3rem 0.45rem;
   }
 
   .section-title {
@@ -302,7 +306,6 @@
   .historic-card__diff {
     flex-basis: 100%;
     text-align: right;
-    white-space: normal;
   }
 }
 

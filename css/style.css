@@ -1450,6 +1450,7 @@ body.theme-dark.theme-mist { --color-bg-start: #1a1a2e; --color-bg-end: #2d2d44;
   align-items: center;
   gap: 0.8rem;
   flex-wrap: wrap;
+  overflow: hidden;
 }
 
 .historic-card__main {
@@ -1498,7 +1499,6 @@ body.theme-dark.theme-mist { --color-bg-start: #1a1a2e; --color-bg-end: #2d2d44;
   margin-left: auto;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .historic-card__more {
@@ -1586,7 +1586,7 @@ body.theme-dark.theme-mist { --color-bg-start: #1a1a2e; --color-bg-end: #2d2d44;
 
 .hourly-card {
   flex: 0 0 auto;
-  width: 130px;
+  width: 145px;
   background: var(--color-card);
   border: 1px solid var(--color-card-border);
   border-radius: var(--radius-sm);
