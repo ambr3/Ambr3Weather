@@ -163,7 +163,7 @@ const App = {
       const name = this.lastCity || CONFIG.DEFAULT_CITY;
       this.loadWeather(this.lastLat, this.lastLon, name, this.lastCountry || '', name).catch(() => {});
     } else if (this.lastCity) {
-      this.searchCity(this.lastCity);
+      this.searchCity(this.lastCity).catch(() => {});
     } else {
       const cached = Utils.loadWeatherCache();
       if (cached && cached.weather) {

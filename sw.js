@@ -66,7 +66,7 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = request.url;
 
-  if (url.includes('api.open-meteo.com') || url.includes('air-quality-api.open-meteo.com') || url.includes('geocoding-api.open-meteo.com') || url.includes('archive-api.open-meteo.com')) {
+  if (url.includes('api.open-meteo.com') || url.includes('air-quality-api.open-meteo.com') || url.includes('geocoding-api.open-meteo.com')) {
     event.respondWith(
       caches.open(API_CACHE).then((cache) =>
         fetch(request)

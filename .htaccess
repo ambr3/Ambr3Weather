@@ -14,7 +14,7 @@
 
   # CSP is enforced only as an HTTP header; `frame-ancestors` is ignored in <meta>.
   <FilesMatch "^index\.html$">
-    Header set Content-Security-Policy "default-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests; connect-src https://api.open-meteo.com https://air-quality-api.open-meteo.com https://geocoding-api.open-meteo.com https://archive-api.open-meteo.com; img-src 'self' https://tile.openstreetmap.org; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-ancestors 'none'"
+    Header set Content-Security-Policy "default-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests; connect-src https://api.open-meteo.com https://air-quality-api.open-meteo.com https://geocoding-api.open-meteo.com; img-src 'self' https://tile.openstreetmap.org; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-ancestors 'none'"
   </FilesMatch>
 
   <FilesMatch "^offline\.html$">
