@@ -2,6 +2,7 @@ const App = {
   units: Utils.safeGet('units', null) || CONFIG.DEFAULT_UNITS,
   windUnit: Utils.safeGet('windUnit', null) || (Utils.safeGet('units', null) === 'imperial' ? 'mph' : 'kmh'),
   visUnit: Utils.safeGet('visUnit', null) || 'km',
+  pressUnit: (Utils.safeGet('pressUnit', null) === 'inHg' ? 'inHg' : 'hPa'),
   forecastDays: parseInt(Utils.safeGet('forecastDays', ''), 10) === 14 ? 14 : 7,
   hourlyAll: Utils.safeGet('hourlyAll', '') === '1',
   chartMode: Utils.safeGet('chartMode', 'temp') || 'temp',
@@ -20,6 +21,7 @@ const App = {
     UI.setUnitLabel(this.units);
     UI.setWindUnitLabel(this.windUnit);
     UI.setVisLabel(this.visUnit);
+    UI.setPressUnit(this.pressUnit);
     UI.initThemeToggle();
 
     this.$('searchForm').addEventListener('submit', (e) => {
@@ -101,6 +103,9 @@ const App = {
     this.$('chartRainBtn').addEventListener('click', () => this.setChartMode('rain'));
     this.$('chartWindBtn').addEventListener('click', () => this.setChartMode('wind'));
     this.$('chartHumidityBtn').addEventListener('click', () => this.setChartMode('humidity'));
+    this.$('chartCloudBtn').addEventListener('click', () => this.setChartMode('cloud'));
+    this.$('chartPressureBtn').addEventListener('click', () => this.setChartMode('pressure'));
+    this.$('chartSolarBtn').addEventListener('click', () => this.setChartMode('solar'));
     UI.setChartMode(this.chartMode);
 
     this.enableDragScroll('forecastCards');
@@ -219,13 +224,7 @@ const App = {
       ]);
       if (seq !== this._weatherSeq) return;
       if (!weather) return;
-      API.getAlerts(lat, lon).then((alerts) => {
-        if (seq === this._weatherSeq) UI.renderAlerts(alerts);
-      }).catch(() => {});
       UI.renderWeather(weather, aq, units, city, country, lat, lon, forecastDays);
-      API.getHistoric(lat, lon, units).then((historic) => {
-        if (seq === this._weatherSeq) UI.renderHistoricSection(historic, units);
-      }).catch(() => {});
       this._last = { weather, aq, units, name: city, country, lat, lon, forecastDays };
       Utils.saveWeatherCache({ savedAt: Date.now(), units, name: city, country, lat, lon, weather, aq });
     } catch (e) {
@@ -391,6 +390,7 @@ const App = {
     UI.setHourlyRange(all);
     if (this._last && this._last.weather) {
       UI.renderHourly(this._last.weather.hourly, this.units);
+      UI.renderHourlyChart(this._last.weather.hourly, this.units);
     }
   },
 
@@ -405,7 +405,7 @@ const App = {
   },
 
   setChartMode(mode) {
-    if (!['temp', 'rain', 'wind', 'humidity'].includes(mode)) return;
+    if (!['temp', 'rain', 'wind', 'humidity', 'cloud', 'pressure', 'solar'].includes(mode)) return;
     if (this.chartMode === mode) return;
     this.chartMode = mode;
     Utils.safeSet('chartMode', mode);
@@ -425,9 +425,6 @@ const App = {
         API.getWeather(lat, lon, this.units, this.windUnit, this.forecastDays),
         API.getAirQuality(lat, lon).catch(() => null),
       ]);
-      API.getAlerts(lat, lon).then((alerts) => {
-        if (seq === this._weatherSeq) UI.renderAlerts(alerts);
-      }).catch(() => {});
     } catch (err) {
       if (seq !== this._weatherSeq) return;
       const cached = Utils.loadWeatherCache();
@@ -446,10 +443,6 @@ const App = {
     if (seq !== this._weatherSeq) return;
 
     UI.renderWeather(weather, aq, this.units, name, country, lat, lon, this.forecastDays);
-    API.getHistoric(lat, lon, this.units).then((historic) => {
-      if (seq !== this._weatherSeq) return;
-      UI.renderHistoricSection(historic, this.units);
-    }).catch(() => {});
     this._last = { weather, aq, units: this.units, name, country, lat, lon, forecastDays: this.forecastDays };
     this.lastCity = cityKey;
     this.lastCountry = country;

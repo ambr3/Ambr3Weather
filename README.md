@@ -39,7 +39,8 @@ I would always recommend using Vanadium (GrapheneOS) or Brave Browser to install
 - **Static map** — OpenStreetMap tile with location pin
 - UV index with color-coded badge
 - 7-day or 14-day forecast with daily cards (tab toggle)
-- Hourly scroll with 24h / All tab toggle, plus a temperature/rain/wind/humidity chart with tab toggle
+- Hourly scroll with 24h / All tab toggle, plus a chart with tab toggle (Temp & Dew, Rain, Wind, Humidity, Cloud, Pressure, Sun strength)
+- Daytime-optimised daily forecast — rain icons only shown for meaningful daytime rain, with trace/light rain ignored for a more positive outlook
 - **Auto-refresh** — silently updates every 30 minutes
 - **Dark/light mode toggle** — saved between visits
 - Dynamic weather backgrounds (sunny, rainy, snowy, night, thunder, mist, etc.)

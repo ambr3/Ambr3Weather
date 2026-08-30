@@ -522,64 +522,6 @@ body.theme-dark.theme-mist { --color-bg-start: #1a1a2e; --color-bg-end: #2d2d44;
   font-weight: 500;
 }
 
-/* Weather Alerts */
-.alerts-bar {
-  max-width: 900px;
-  margin: 0 auto 1.5rem;
-  padding: 0 1.5rem;
-}
-
-.alerts-bar__inner {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.alerts-bar__item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.6rem;
-  padding: 0.8rem 1rem;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 200, 0, 0.35);
-  background: rgba(255, 200, 0, 0.14);
-  backdrop-filter: blur(var(--blur));
-  animation: fadeSlideIn 0.4s ease;
-}
-
-.alerts-bar__item--warning,
-.alerts-bar__item--orange,
-.alerts-bar__item--red {
-  border-color: rgba(255, 140, 0, 0.45);
-  background: rgba(255, 140, 0, 0.18);
-}
-
-.alerts-bar__item--extreme {
-  border-color: rgba(255, 60, 60, 0.55);
-  background: rgba(255, 60, 60, 0.22);
-}
-
-.alerts-bar__icon {
-  flex-shrink: 0;
-  margin-top: 0.15rem;
-}
-
-.alerts-bar__text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.alerts-bar__title {
-  font-weight: 700;
-  font-size: 0.95rem;
-}
-
-.alerts-bar__desc {
-  font-size: 0.85rem;
-  color: var(--color-text-muted);
-}
-
 /* Weather Content */
 .weather-content {
   max-width: 900px;
@@ -1317,6 +1259,12 @@ body.theme-dark.theme-mist { --color-bg-start: #1a1a2e; --color-bg-end: #2d2d44;
   font-weight: 700;
 }
 
+.map-badge__wind {
+  font-size: 0.75rem;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
 .map-badge__arrow {
   flex-shrink: 0;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
@@ -1412,10 +1360,17 @@ body.theme-dark.theme-mist { --color-bg-start: #1a1a2e; --color-bg-end: #2d2d44;
 .hourly-chart__legend {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
   margin-top: 0.5rem;
   font-size: 0.78rem;
   color: var(--color-text-muted);
+}
+
+.hourly-chart__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .hourly-chart__legend-swatch {
@@ -1426,133 +1381,6 @@ body.theme-dark.theme-mist { --color-bg-start: #1a1a2e; --color-bg-end: #2d2d44;
 }
 
 /* Historic Section */
-.historic-section {
-  margin-bottom: 2rem;
-}
-
-.historic-card {
-  background: var(--color-card);
-  border: 1px solid var(--color-card-border);
-  border-radius: var(--radius-sm);
-  padding: 0.9rem 1rem;
-  backdrop-filter: blur(var(--blur));
-  cursor: pointer;
-  transition: background 0.15s;
-  overflow: hidden;
-}
-
-.historic-card:hover {
-  background: var(--color-card-hover);
-}
-
-.historic-card__header {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  flex-wrap: wrap;
-  overflow: hidden;
-}
-
-.historic-card__main {
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  min-width: 0;
-}
-
-.historic-card__label {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.historic-card__date {
-  font-size: 0.85rem;
-  color: var(--color-text);
-  font-weight: 500;
-}
-
-.historic-card__temps {
-  display: flex;
-  gap: 0.6rem;
-  font-size: 1.5rem;
-  font-weight: 700;
-  min-width: 0;
-}
-
-.historic-card__hi {
-  color: #ff6b6b;
-  text-shadow: 0 1px 4px rgba(255, 107, 107, 0.4);
-}
-
-.historic-card__lo {
-  color: #74b9ff;
-  font-weight: 700;
-  text-shadow: 0 1px 4px rgba(116, 185, 255, 0.4);
-}
-
-.historic-card__diff {
-  font-size: 0.78rem;
-  color: var(--color-text-muted);
-  margin-left: auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.historic-card__more {
-  display: block;
-  text-align: center;
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  margin-top: 0.5rem;
-  opacity: 0.7;
-}
-
-.historic-card__detail {
-  margin-top: 0.8rem;
-  padding-top: 0.7rem;
-  border-top: 1px solid var(--color-card-border);
-}
-
-.historic-detail__note {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  font-style: italic;
-  margin-bottom: 0.5rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--color-card-border);
-}
-
-.historic-detail__row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.3rem 0;
-}
-
-.historic-detail__label {
-  font-size: 0.78rem;
-  color: var(--color-text-muted);
-}
-
-.historic-detail__value {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--color-text);
-}
-
-.historic-detail__value--high {
-  color: #ff6b6b;
-  font-weight: 700;
-}
-
-.historic-detail__value--low {
-  color: #74b9ff;
-  font-weight: 700;
-}
-
 /* Hourly Scroll */
 .hourly-section {
   margin-bottom: 2rem;

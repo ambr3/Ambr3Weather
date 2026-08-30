@@ -47,7 +47,7 @@ const Utils = {
     let offsetMs;
     try {
       const dtf = new Intl.DateTimeFormat('en-US', {
-        timeZone: tz, hour12: false, year: 'numeric', month: '2-digit',
+        timeZone: tz, hour12: false, hourCycle: 'h23', year: 'numeric', month: '2-digit',
         day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit',
       });
       const parts = {};
@@ -96,13 +96,37 @@ const Utils = {
 
   formatDuration(seconds) {
     if (seconds == null) return '—';
-    const h = Math.floor(seconds / 3600);
-    const m = Math.round((seconds % 3600) / 60);
+    let h = Math.floor(seconds / 3600);
+    let m = Math.round((seconds % 3600) / 60);
+    if (m === 60) { h += 1; m = 0; }
     if (h === 0) return `${m}m`;
-    return `${h}h ${m}m`;
+    return m === 0 ? `${h}h` : `${h}h ${m}m`;
   },
 
-  getAQILevel(aqi) {
+  formatPressure(hPa, unit) {
+    if (hPa == null || !Number.isFinite(hPa)) return '—';
+    if (unit === 'inHg') return `${(hPa * 0.02953).toFixed(2)} inHg`;
+    return `${Math.round(hPa)} hPa`;
+  },
+
+  formatSnow(cm, units) {
+    if (cm == null || cm <= 0) return null;
+    if (units === 'imperial') {
+      const inches = Math.round((cm / 2.54) * 10) / 10;
+      return `${inches} in`;
+    }
+    return `${Math.round(cm * 10) / 10} cm`;
+  },
+
+  getAQILevel(aqi, scale) {
+    if (scale === 'us') {
+      if (aqi <= 50) return { label: 'Good', color: '#4caf50' };
+      if (aqi <= 100) return { label: 'Moderate', color: '#ff9800' };
+      if (aqi <= 150) return { label: 'Unhealthy for sensitive', color: '#f44336' };
+      if (aqi <= 200) return { label: 'Unhealthy', color: '#9c27b0' };
+      if (aqi <= 300) return { label: 'Very Unhealthy', color: '#880e4f' };
+      return { label: 'Hazardous', color: '#4a148c' };
+    }
     if (aqi <= 20) return { label: 'Good', color: '#4caf50' };
     if (aqi <= 40) return { label: 'Fair', color: '#8bc34a' };
     if (aqi <= 60) return { label: 'Moderate', color: '#ff9800' };

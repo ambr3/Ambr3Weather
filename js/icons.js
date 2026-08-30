@@ -32,6 +32,17 @@ const WeatherIcons = {
     return 'clear';
   },
 
+  // Show a rain/snow icon when there is actual precipitation or a high chance
+  // of it, even if the dominant WMO code only describes clouds/clear sky.
+  adjustForPrecip(code, pop, precip, snow) {
+    const g = this._group(code);
+    if (g === 'rain' || g === 'drizzle' || g === 'snow' || g === 'thunder') return code;
+    if (snow > 0) return 71;
+    if (precip > 0) return 61;
+    if (pop != null && pop >= 60) return 61;
+    return code;
+  },
+
   _svg(body, viewBox = '0 0 64 64') {
     return `<svg viewBox="${viewBox}" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">${body}</svg>`;
   },
@@ -87,7 +98,6 @@ const WeatherIcons = {
   `,
 
   _drizzleDay: () => WeatherIcons._svg(`
-    <circle cx="46" cy="16" r="7" fill="#FFD93D"/>
     ${WeatherIcons._cloudBase()}
     <line x1="20" y1="50" x2="19" y2="54" stroke="#C6EEFF" stroke-width="2" stroke-linecap="round"/>
     <line x1="30" y1="50" x2="29" y2="54" stroke="#C6EEFF" stroke-width="2" stroke-linecap="round"/>
@@ -101,7 +111,6 @@ const WeatherIcons = {
   `),
 
   _rainDay: () => WeatherIcons._svg(`
-    <circle cx="46" cy="16" r="7" fill="#FFD93D"/>
     ${WeatherIcons._cloudBase()}
     ${WeatherIcons._rainDrops(2)}
   `),
@@ -119,7 +128,6 @@ const WeatherIcons = {
   `,
 
   _snowDay: () => WeatherIcons._svg(`
-    <circle cx="46" cy="16" r="7" fill="#FFD93D"/>
     ${WeatherIcons._cloudBase()}
     ${WeatherIcons._snowFlakes(2)}
   `),

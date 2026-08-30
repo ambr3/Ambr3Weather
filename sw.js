@@ -1,6 +1,6 @@
-const CACHE_NAME = 'ambr3weather-v0.3.18';
+const CACHE_NAME = 'ambr3weather-v0.3.20';
 const API_CACHE = 'ambr3weather-api-v1';
-const VERSION = 'v0.3.18';
+const VERSION = 'v0.3.20';
 const STATIC_ASSETS = [
   './',
   './index.html',
