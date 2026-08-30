@@ -1337,6 +1337,12 @@ body.theme-dark.theme-mist { --color-bg-start: #1a1a2e; --color-bg-end: #2d2d44;
   display: flex;
   justify-content: center;
   margin-bottom: 0.8rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  max-width: 100%;
+}
+.chart-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .hourly-chart {
