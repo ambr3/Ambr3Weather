@@ -39,7 +39,7 @@ const WeatherIcons = {
     if (g === 'rain' || g === 'drizzle' || g === 'snow' || g === 'thunder') return code;
     if (snow > 0) return 71;
     if (precip > 0) return 61;
-    if (pop != null && pop >= 60) return 61;
+    if (pop != null && pop >= 50) return 61;
     return code;
   },
 
