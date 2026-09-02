@@ -3,6 +3,17 @@ const UI = {
 
   _hourlyAll: false,
   _chartMode: 'temp',
+  _measureCanvas: null,
+  _measureCtx: null,
+
+  _getMeasureCtx() {
+    if (!this._measureCanvas) {
+      this._measureCanvas = document.createElement('canvas');
+      this._measureCtx = this._measureCanvas.getContext('2d');
+    }
+    this._measureCtx.font = '600 18px system-ui, sans-serif';
+    return this._measureCtx;
+  },
 
   _arcPos(ARC, t) {
     const seg = ARC.length - 1;
@@ -18,10 +29,11 @@ const UI = {
     const r = Utils.parseLocal(rise, tz).getTime();
     let s = Utils.parseLocal(set, tz).getTime();
     if (isNaN(r) || isNaN(s)) return null;
-    // Moonset is often the next calendar day, so the raw timestamps invert.
     if (s <= r) s += 24 * 60 * 60 * 1000;
+    const duration = s - r;
+    if (duration > 26 * 60 * 60 * 1000 || duration < 0) return null;
     const t = (Date.now() - r) / (s - r);
-    return { pos: this._arcPos(this._arcData.ARC, Math.max(0, Math.min(1, t))), below: t < 0 || t > 1 };
+    return { pos: this._arcPos(this._arc.ARC, Math.max(0, Math.min(1, t))), below: t < 0 || t > 1 };
   },
 
   _hourlyStartIdx(hourly) {
@@ -64,16 +76,26 @@ const UI = {
     if (el) el.classList.toggle('hidden', !show);
   },
 
+  markStale(show, message) {
+    const el = this.$('staleNotice');
+    if (el) {
+      if (message) this.$('staleNoticeText').textContent = message;
+      el.classList.toggle('hidden', !show);
+    }
+  },
+
 
 
   renderCurrentWeather(data, units) {
     if (!data || !data.current) return;
     const c = data.current;
     const d = data.daily || {};
-    const icon = WeatherIcons.get(c.weather_code, c.is_day);
+    const currentPop = (d.time && d.time[0]) ? this.daytimeMaxPop(d.time[0], data.hourly) : null;
+    const iconCode = WeatherIcons.adjustForPrecip(c.weather_code, currentPop, c.precipitation || 0, c.snowfall || 0);
+    const icon = WeatherIcons.get(iconCode, c.is_day);
     const temp = Utils.formatTemp(c.temperature_2m, units);
     const feels = Utils.formatTemp(c.apparent_temperature, units);
-    const desc = Utils.getWeatherDescription(c.weather_code);
+    const desc = Utils.getWeatherDescription(iconCode);
 
     const sunrise = d.sunrise && d.sunrise[0] ? Utils.formatTime(d.sunrise[0], this._tz) : '—';
     const sunset = d.sunset && d.sunset[0] ? Utils.formatTime(d.sunset[0], this._tz) : '—';
@@ -87,18 +109,17 @@ const UI = {
     const dayHigh = d.temperature_2m_max && d.temperature_2m_max[0] != null ? Utils.formatTemp(d.temperature_2m_max[0], units) : null;
     const dayLow = d.temperature_2m_min && d.temperature_2m_min[0] != null ? Utils.formatTemp(d.temperature_2m_min[0], units) : null;
     const todayPop = (d.time && d.time[0]) ? this.daytimeMaxPop(d.time[0], data.hourly) : null;
-    const dayPop = todayPop != null ? todayPop : (d.precipitation_probability_max ? Math.round(d.precipitation_probability_max[0] || 0) : null);
+    const dayPop = todayPop != null ? todayPop : (d.precipitation_probability_max != null ? Math.round(d.precipitation_probability_max[0] ?? 0) : null);
     const windUnit = Utils.getWindUnit(UI.windUnit);
     const dayWind = c.wind_speed_10m != null ? `${Math.round(c.wind_speed_10m)} ${windUnit}` : null;
     const summaryParts = [];
     if (dayHigh && dayLow) summaryParts.push(`High ${dayHigh} / Low ${dayLow}`);
-    if (dayPop != null) summaryParts.push(`${dayPop}% rain`);
+    if (dayPop != null && dayPop > 0) summaryParts.push(`${dayPop}% rain`);
     if (dayWind) summaryParts.push(`Wind ${dayWind}`);
     const daySummary = summaryParts.length ? summaryParts.join(' · ') : '';
 
     const ARC = [[0,100],[10,78],[20,58],[30,42],[40,31],[50,28],[60,31],[70,42],[80,58],[90,78],[100,100]];
     this._arc = { ARC, tz: this._tz, sunrise: d.sunrise && d.sunrise[0], sunset: d.sunset && d.sunset[0], moonrise: d.moonrise && d.moonrise[0], moonset: d.moonset && d.moonset[0] };
-    this._arcData = this._arc;
 
     const sunArc = this._arcFor(d.sunrise && d.sunrise[0], d.sunset && d.sunset[0], this._tz);
     const moonArc = this._arcFor(d.moonrise && d.moonrise[0], d.moonset && d.moonset[0], this._tz);
@@ -151,10 +172,19 @@ const UI = {
     const theme = Utils.getThemeClass(c.weather_code, c.is_day);
     const isDark = document.body.classList.contains('theme-dark');
     const isDyn = document.body.classList.contains('dynamic-text');
-    document.body.className = '';
+    document.body.classList.remove('theme-clear', 'theme-clear-night', 'theme-clouds',
+      'theme-rain', 'theme-snow', 'theme-thunder', 'theme-drizzle', 'theme-mist');
     document.body.classList.add(theme);
     document.body.classList.toggle('theme-dark', isDark);
     document.body.classList.toggle('dynamic-text', isDyn);
+    const themeColors = {
+      'theme-clear': '#4facfe', 'theme-clear-night': '#1a1a3e',
+      'theme-clouds': '#607d8b', 'theme-rain': '#4286f4',
+      'theme-snow': '#90caf9', 'theme-thunder': '#5c6bc0',
+      'theme-drizzle': '#78909c', 'theme-mist': '#b0bec5'
+    };
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = themeColors[theme] || '#4facfe';
 
     this.startLiveClock();
   },
@@ -200,7 +230,7 @@ const UI = {
 
     const precipNow = Utils.formatPrecip(c.precipitation, units) || (units === 'imperial' ? '0 in' : '0 mm');
     const todayPop = (d.time && d.time[0]) ? this.daytimeMaxPop(d.time[0], data.hourly) : null;
-    const popToday = todayPop != null ? todayPop : (d.precipitation_probability_max ? Math.round(d.precipitation_probability_max[0] || 0) : null);
+    const popToday = todayPop != null ? todayPop : (d.precipitation_probability_max != null ? Math.round(d.precipitation_probability_max[0] ?? 0) : null);
     const rainToday = d.rain_sum ? Math.round(d.rain_sum[0] * 10) / 10 : null;
     const snowToday = d.snowfall_sum ? d.snowfall_sum[0] : null;
     const precipSub = [];
@@ -210,9 +240,7 @@ const UI = {
     if (rainToday > 0) precipSub.push(`${Utils.formatPrecip(rainToday, units)} rain`);
 
     const windDir = c.wind_direction_10m != null ? Math.round(c.wind_direction_10m) : null;
-    const windArrow = windDir != null
-      ? `<svg class="detail-box__arrow" viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform:rotate(${windDir}deg)"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>`
-      : '';
+    const windArrow = windDir != null ? this._windArrowSVG(windDir, 'detail-box__arrow', 36) : '';
 
     const uv = d.uv_index_max ? d.uv_index_max[0] : null;
     const uvClear = d.uv_index_clear_sky_max ? d.uv_index_clear_sky_max[0] : null;
@@ -299,7 +327,7 @@ const UI = {
       const pollenColors = { Low: '#5fb84d', Moderate: '#ff9800', High: '#f44336', 'Very High': '#880e4f' };
       const barColor = pollenColors[pLevel.label] || '#5fb84d';
       const bars = top.slice(0, 3).map(([label, v]) => {
-        const pct = Math.max(2, Math.round((v / 100) * 100));
+        const pct = Math.max(2, Math.min(100, Math.round(v)));
         return `
           <div class="pollen-row">
             <span class="pollen-row__label">${label}</span>
@@ -314,7 +342,7 @@ const UI = {
           <span class="conditions-item__value"><span style="color:${pLevel.color}">${pLevel.label}</span></span>
           <span class="conditions-item__sub">${top[0][0]} is highest · grains/m³</span>
           <div class="pollen-bars">${bars}</div>
-          <div class="pollen-legend">Low &lt;5 · Moderate 5–30 · High 30–100 · Very High &gt;100</div>
+          <div class="pollen-legend">Low &lt;5 · Moderate 5–30 · High 30–99 · Very High 100+</div>
         </div>
       `;
     }
@@ -416,9 +444,7 @@ const UI = {
     }
 
     const windDirDeg = windDir != null ? Math.round(windDir) : null;
-    const windArrowSvg = windDirDeg != null
-      ? `<svg class="map-badge__arrow" viewBox="0 0 24 24" width="16" height="16" style="transform:rotate(${windDirDeg}deg)"><path d="M12 19V5" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none"/><path d="M5 12l7-7 7 7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`
-      : '';
+    const windArrowSvg = windDirDeg != null ? this._windArrowSVG(windDirDeg, 'map-badge__arrow', 16, '#fff') : '';
 
     container.innerHTML = `
       <div class="map-view" style="height:${mapHeight}px">
@@ -464,14 +490,14 @@ const UI = {
     const cards = daily.time.slice(0, end).map((date, i) => {
       const max = daily.temperature_2m_max && daily.temperature_2m_max[i] != null ? Math.round(daily.temperature_2m_max[i]) : '—';
       const min = daily.temperature_2m_min && daily.temperature_2m_min[i] != null ? Math.round(daily.temperature_2m_min[i]) : '—';
-      const pop = this.daytimeMaxPop(date, hourly) ?? (daily.precipitation_probability_max ? Math.round(daily.precipitation_probability_max[i] || 0) : 0);
+      const pop = this.daytimeMaxPop(date, hourly) ?? (daily.precipitation_probability_max != null ? Math.round(daily.precipitation_probability_max[i] ?? 0) : 0);
       const windMax = daily.wind_speed_10m_max && daily.wind_speed_10m_max[i] != null ? Math.round(daily.wind_speed_10m_max[i]) : null;
       const gustMax = daily.wind_gusts_10m_max && daily.wind_gusts_10m_max[i] != null ? Math.round(daily.wind_gusts_10m_max[i]) : null;
       const rainSum = daily.rain_sum ? daily.rain_sum[i] : null;
       const snowSum = daily.snowfall_sum ? daily.snowfall_sum[i] : null;
       const sunshine = daily.sunshine_duration ? daily.sunshine_duration[i] : null;
       const weatherCode = daily.weather_code[i];
-      const iconCode = WeatherIcons.adjustForPrecip(weatherCode, pop, rainSum >= 1 ? 1 : 0, snowSum >= 0.5 ? 1 : 0);
+      const iconCode = WeatherIcons.adjustForPrecip(weatherCode, pop, rainSum || 0, snowSum || 0);
       const icon = WeatherIcons.get(iconCode, true);
 
       const d = Utils.parseLocal(date + 'T00:00:00', this._tz);
@@ -557,18 +583,22 @@ const UI = {
 
     let todayKey = null;
     let tomorrowKey = null;
+    const advanceDay = (dateStr) => {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const next = new Date(y, m - 1, d + 1);
+      return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`;
+    };
     try {
       const dtf = new Intl.DateTimeFormat('en-CA', {
         timeZone: this._tz, year: 'numeric', month: '2-digit', day: '2-digit',
       });
       todayKey = dtf.format(new Date());
-      tomorrowKey = dtf.format(new Date(Date.now() + 86400000));
+      tomorrowKey = advanceDay(todayKey);
     } catch {
       const now = new Date();
       const pad = (n) => String(n).padStart(2, '0');
       todayKey = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-      const tom = new Date(now.getTime() + 86400000);
-      tomorrowKey = `${tom.getFullYear()}-${pad(tom.getMonth() + 1)}-${pad(tom.getDate())}`;
+      tomorrowKey = advanceDay(todayKey);
     }
 
     let prevKey = '';
@@ -584,7 +614,7 @@ const UI = {
       const precipNow = hourly.precipitation ? hourly.precipitation[idx] || 0 : 0;
       const snowNow = hourly.snowfall ? hourly.snowfall[idx] || 0 : 0;
       const iconCode = WeatherIcons.adjustForPrecip(hourly.weather_code[idx], pop, precipNow, snowNow);
-      const icon = WeatherIcons.get(iconCode, hourly.is_day ? hourly.is_day[idx] : 1);
+      const icon = WeatherIcons.get(iconCode, hourly.is_day && hourly.is_day[idx] != null ? hourly.is_day[idx] : 1);
 
       const dateKey = time.slice(0, 10);
       const showDate = i === 0 || dateKey !== prevKey;
@@ -693,7 +723,8 @@ const UI = {
       const vals = slice('cloud_cover');
       if (!vals) return;
       cfg = {
-        min: 0, max: 100, values: vals, color: '#90A4AE', suffix: '%',
+        min: 0, max: 100, suffix: '%',
+        bars: vals, barH: 1,
         legend: [{ label: 'Cloud cover (%)', swatch: '#90A4AE' }],
       };
     } else if (mode === 'pressure') {
@@ -734,9 +765,7 @@ const UI = {
     // Grow left padding so the widest y-axis label (e.g. "1013 hPa") isn't clipped.
     if (cfg.values) {
       try {
-        const c = document.createElement('canvas');
-        const ctx = c.getContext('2d');
-        ctx.font = '600 18px system-ui, sans-serif';
+        const ctx = this._getMeasureCtx();
         const ticks = 4;
         for (let i = 0; i <= ticks; i++) {
           const t = Math.round(minT + (span * i) / ticks);
@@ -765,7 +794,8 @@ const UI = {
       xlabels += `<text x="${x(i).toFixed(1)}" y="${H - 12}" text-anchor="middle" font-size="18" font-weight="600" fill="currentColor" fill-opacity="0.9">${Utils.formatHourShort(times[i], this._tz)}</text>`;
     }
     if (labelStep < 24) {
-      const dayEnd = new Date(Utils.parseLocal(times[0], this._tz).getTime() + 86400000);
+      const firstDate = Utils.parseLocal(times[0], this._tz);
+      const dayEnd = new Date(firstDate.getFullYear(), firstDate.getMonth(), firstDate.getDate() + 1);
       xlabels += `<text x="${x(times.length).toFixed(1)}" y="${H - 12}" text-anchor="end" font-size="18" font-weight="600" fill="currentColor" fill-opacity="0.9">${Utils.formatHourShort(dayEnd, this._tz)}</text>`;
     }
 
@@ -929,5 +959,13 @@ const UI = {
     const el = document.createElement('span');
     el.textContent = String(str);
     return el.innerHTML;
+  },
+
+  _windArrowSVG(dir, className, size, stroke) {
+    if (dir == null) return '';
+    const safeClass = String(className).replace(/[^a-zA-Z0-9_-]/g, '');
+    const safeStroke = stroke && /^#[0-9a-fA-F]{3,8}$/.test(stroke) ? stroke : '';
+    const s = safeStroke ? ` stroke="${safeStroke}" fill="none"` : '';
+    return `<svg class="${safeClass}" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform:rotate(${Math.round(dir)}deg)"><path d="M12 19V5"${s}/><path d="M5 12l7-7 7 7"${s}/></svg>`;
   },
 };

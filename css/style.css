@@ -9,6 +9,7 @@
   --color-accent: #ffd166;
   --color-accent-2: #ff6b9d;
   --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-heading: var(--font-body);
   --radius: 16px;
   --radius-sm: 10px;
   --shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
@@ -817,6 +818,7 @@ body.theme-dark.theme-mist { --color-bg-start: #1a1a2e; --color-bg-end: #2d2d44;
   height: 130px;
   z-index: 0;
   pointer-events: none;
+  overflow: visible;
 }
 
 .current-weather__arc-svg {

@@ -16,6 +16,7 @@ const App = {
   _weatherSeq: 0,
   _searchSeq: 0,
   _blurTimer: null,
+  _last: null,
 
   init() {
     UI.setUnitLabel(this.units);
@@ -137,7 +138,7 @@ const App = {
             this.deferredPrompt = null;
             this.$('installBanner').classList.add('hidden');
           })
-          .catch(() => {});
+          .catch((e) => { if (window.dev) console.debug('Background load failed:', e); });
       }
     });
 
@@ -150,6 +151,14 @@ const App = {
     window.addEventListener('online', () => UI.markOffline(false));
     window.addEventListener('offline', () => UI.markOffline(true));
 
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        this.hideDropdown();
+        this.closeUnitsMenu();
+        this.toggleInstructions(false);
+      }
+    });
+
     window.addEventListener('resize', Utils.debounce(() => {
       if (!this._last) return;
       UI.renderHourlyChart(this._last.weather.hourly, this._last.units);
@@ -161,9 +170,9 @@ const App = {
 
     if (Number.isFinite(this.lastLat) && Number.isFinite(this.lastLon)) {
       const name = this.lastCity || CONFIG.DEFAULT_CITY;
-      this.loadWeather(this.lastLat, this.lastLon, name, this.lastCountry || '', name).catch(() => {});
+      this.loadWeather(this.lastLat, this.lastLon, name, this.lastCountry || '', name).catch((e) => { if (window.dev) console.debug('Background load failed:', e); });
     } else if (this.lastCity) {
-      this.searchCity(this.lastCity).catch(() => {});
+      this.searchCity(this.lastCity).catch((e) => { if (window.dev) console.debug('Background load failed:', e); });
     } else {
       const cached = Utils.loadWeatherCache();
       if (cached && cached.weather) {
@@ -173,13 +182,18 @@ const App = {
         UI.markOffline(!navigator.onLine);
         UI.renderWeather(cached.weather, cached.aq || null, this.units, cached.name, cached.country, cached.lat, cached.lon, this.forecastDays);
         this._last = { weather: cached.weather, aq: cached.aq || null, units: this.units, name: cached.name, country: cached.country || '', lat: cached.lat, lon: cached.lon, forecastDays: this.forecastDays };
+        const ageMs = cached.savedAt ? Date.now() - cached.savedAt : 0;
+        const ageHrs = Math.floor(ageMs / (60 * 60 * 1000));
+        if (ageHrs >= 6) {
+          UI.markStale(true, `Forecast data is ${ageHrs}h old. Pull to refresh.`);
+        }
       } else if (CONFIG.DEFAULT_CITY) {
-        this.searchCity(CONFIG.DEFAULT_CITY);
+        this.searchCity(CONFIG.DEFAULT_CITY).catch((e) => { if (window.dev) console.debug('Default city load failed:', e); });
       }
     }
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
+      navigator.serviceWorker.register('./sw.js').catch((e) => { if (window.dev) console.debug('SW registration failed:', e); });
     }
 
     this.startAutoRefresh();
@@ -292,7 +306,7 @@ const App = {
     const displayName = r.name || 'Location';
     this.$('searchInput').value = displayName;
     this.hideDropdown();
-    this.loadWeather(r.lat, r.lon, displayName, r.country, displayName).catch(() => {});
+    this.loadWeather(r.lat, r.lon, displayName, r.country, `${r.name}, ${r.country}`).catch((e) => { if (window.dev) console.debug('Background load failed:', e); });
   },
 
   hideDropdown() {
@@ -329,6 +343,7 @@ const App = {
       const active = i === this.dropdownIndex;
       el.classList.toggle('search-dropdown__item--active', active);
       el.setAttribute('aria-selected', active);
+      if (active) el.scrollIntoView({ block: 'nearest' });
     });
     this.setComboboxState();
   },
@@ -347,6 +362,9 @@ const App = {
       const cached = Utils.loadWeatherCache();
       if (cached && cached.weather && !navigator.onLine) {
         UI.markOffline(true);
+        const ageMs = cached.savedAt ? Date.now() - cached.savedAt : 0;
+        const ageHrs = Math.floor(ageMs / (60 * 60 * 1000));
+        if (ageHrs >= 6) UI.markStale(true, `Forecast data is ${ageHrs}h old.`);
         UI.renderWeather(cached.weather, cached.aq || null, this.units, cached.name, cached.country, cached.lat, cached.lon, this.forecastDays);
       } else {
         UI.showError(err && err.message ? err.message : 'Something went wrong.');
@@ -357,9 +375,9 @@ const App = {
   reloadCurrent() {
     if (Number.isFinite(this.lastLat) && Number.isFinite(this.lastLon)) {
       const name = this.lastCity || 'Current Location';
-      this.loadWeather(this.lastLat, this.lastLon, name, this.lastCountry || '', name).catch(() => {});
+      this.loadWeather(this.lastLat, this.lastLon, name, this.lastCountry || '', name).catch((e) => { if (window.dev) console.debug('Background load failed:', e); });
     } else if (this.lastCity) {
-      this.searchCity(this.lastCity).catch(() => {});
+      this.searchCity(this.lastCity).catch((e) => { if (window.dev) console.debug('Background load failed:', e); });
     }
   },
 
@@ -434,6 +452,9 @@ const App = {
         name = cached.name || name;
         country = cached.country || country;
         UI.markOffline(!navigator.onLine);
+        const ageMs = cached.savedAt ? Date.now() - cached.savedAt : 0;
+        const ageHrs = Math.floor(ageMs / (60 * 60 * 1000));
+        if (ageHrs >= 6) UI.markStale(true, `Forecast data is ${ageHrs}h old.`);
       } else {
         UI.showError(err && err.message ? err.message : 'Something went wrong.');
         return;
@@ -480,19 +501,40 @@ const App = {
           ? 'Location request timed out. Please search for a city.'
           : 'Location access denied. Please search for a city.');
       },
-      { timeout: 15000, maximumAge: 60000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
     );
   },
 
   enableDragScroll(id) {
     const el = this.$(id);
     if (!el) return;
+    if (el._dragEnabled) return;
+    el._dragEnabled = true;
 
     let touchSeen = false;
     el.addEventListener('touchstart', () => { touchSeen = true; }, { once: true, passive: true });
 
     let active = false;
     let lastX = 0;
+
+    const onMove = (e) => {
+      if (!active) return;
+      e.preventDefault();
+      const dx = e.clientX - lastX;
+      lastX = e.clientX;
+      el.scrollLeft -= dx;
+    };
+
+    const onUp = () => {
+      if (!active) return;
+      active = false;
+      el.style.cursor = '';
+      el.style.userSelect = '';
+      el.style.scrollSnapType = '';
+      el.style.webkitScrollSnapType = '';
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
 
     el.addEventListener('mousedown', (e) => {
       if (touchSeen || e.button !== 0) return;
@@ -503,24 +545,9 @@ const App = {
       el.style.userSelect = 'none';
       el.style.scrollSnapType = 'none';
       el.style.webkitScrollSnapType = 'none';
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
       e.preventDefault();
-    });
-
-    window.addEventListener('mousemove', (e) => {
-      if (!active) return;
-      e.preventDefault();
-      const dx = e.clientX - lastX;
-      lastX = e.clientX;
-      el.scrollLeft -= dx;
-    });
-
-    window.addEventListener('mouseup', () => {
-      if (!active) return;
-      active = false;
-      el.style.cursor = '';
-      el.style.userSelect = '';
-      el.style.scrollSnapType = '';
-      el.style.webkitScrollSnapType = '';
     });
   },
 
@@ -554,4 +581,4 @@ const App = {
   },
 };
 
-document.addEventListener('DOMContentLoaded', () => App.init());
+document.addEventListener('DOMContentLoaded', () => App.init().catch((e) => { if (window.dev) console.debug('Init failed:', e); }));

@@ -12,6 +12,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(self), gyroscope=(), magnetometer=(), payment=(), usb=()">
+  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(self), gyroscope=(), magnetometer=(), payment=(), usb=()">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests; connect-src https://api.open-meteo.com https://air-quality-api.open-meteo.com https://geocoding-api.open-meteo.com; img-src 'self' https://tile.openstreetmap.org; style-src 'self' 'unsafe-inline'; script-src 'self';">
 
   <title>Ambr3Weather — Private Weather</title>
@@ -146,6 +147,14 @@
         <line x1="12" y1="20" x2="12.01" y2="20"></line>
       </svg>
       You're offline — showing the last saved forecast.
+    </div>
+
+    <div id="staleNotice" class="offline-notice hidden" role="status">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"></circle>
+        <polyline points="12 6 12 12 16 14"></polyline>
+      </svg>
+      <span id="staleNoticeText">Forecast data is outdated.</span>
     </div>
 
     <div id="weatherContent" class="weather-content">

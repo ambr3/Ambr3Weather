@@ -37,14 +37,14 @@ const WeatherIcons = {
   adjustForPrecip(code, pop, precip, snow) {
     const g = this._group(code);
     if (g === 'rain' || g === 'drizzle' || g === 'snow' || g === 'thunder') return code;
-    if (snow > 0) return 71;
-    if (precip > 0) return 61;
+    if (snow > 0 && pop >= 30) return 71;
+    if (precip > 0 && pop >= 30) return 61;
     if (pop != null && pop >= 50) return 61;
     return code;
   },
 
   _svg(body, viewBox = '0 0 64 64') {
-    return `<svg viewBox="${viewBox}" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">${body}</svg>`;
+    return `<svg viewBox="${viewBox}" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" aria-hidden="true">${body}</svg>`;
   },
 
   _sun: () => WeatherIcons._svg(`

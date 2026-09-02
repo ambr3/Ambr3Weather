@@ -1,13 +1,22 @@
 const API = {
   async fetchJSON(url) {
-    const res = await fetch(url);
-    if (!res.ok) {
-      if (res.status === 400) throw new Error('Invalid request. Check your search.');
-      if (res.status === 404) throw new Error('City not found. Check the spelling.');
-      if (res.status === 429) throw new Error('Too many requests. Wait a moment.');
-      throw new Error('Unable to fetch weather data.');
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+    try {
+      const res = await fetch(url, { signal: controller.signal });
+      if (!res.ok) {
+        if (res.status === 400) throw new Error('Invalid request. Check your search.');
+        if (res.status === 404) throw new Error('City not found. Check the spelling.');
+        if (res.status === 429) throw new Error('Too many requests. Wait a moment.');
+        throw new Error('Unable to fetch weather data.');
+      }
+      return res.json();
+    } catch (e) {
+      if (e.name === 'AbortError') throw new Error('Request timed out. Check your connection.');
+      throw e;
+    } finally {
+      clearTimeout(timer);
     }
-    return res.json();
   },
 
   async searchCities(query) {
