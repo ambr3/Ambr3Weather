@@ -365,6 +365,14 @@ const App = {
         const ageMs = cached.savedAt ? Date.now() - cached.savedAt : 0;
         const ageHrs = Math.floor(ageMs / (60 * 60 * 1000));
         if (ageHrs >= 6) UI.markStale(true, `Forecast data is ${ageHrs}h old.`);
+        this.lastCity = cached.name;
+        this.lastCountry = cached.country || '';
+        this.lastLat = cached.lat;
+        this.lastLon = cached.lon;
+        Utils.safeSet('lastCity', cached.name);
+        Utils.safeSet('lastCountry', cached.country || '');
+        Utils.safeSet('lastLat', cached.lat);
+        Utils.safeSet('lastLon', cached.lon);
         UI.renderWeather(cached.weather, cached.aq || null, this.units, cached.name, cached.country, cached.lat, cached.lon, this.forecastDays);
       } else {
         UI.showError(err && err.message ? err.message : 'Something went wrong.');

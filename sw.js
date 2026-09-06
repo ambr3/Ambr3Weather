@@ -1,19 +1,19 @@
-const CACHE_NAME = 'ambr3weather-v0.3.22';
+const CACHE_NAME = 'ambr3weather-v0.5.0';
 const API_CACHE = 'ambr3weather-api-v1';
-const VERSION = 'v0.3.22';
+const VERSION = 'v0.5.0';
 const STATIC_ASSETS = [
   './',
   './index.html',
   './offline.html',
-  `./css/style.css?${VERSION}`,
-  `./css/responsive.css?${VERSION}`,
-  `./js/config.js?${VERSION}`,
-  `./js/utils.js?${VERSION}`,
-  `./js/icons.js?${VERSION}`,
-  `./js/api.js?${VERSION}`,
-  `./js/ui.js?${VERSION}`,
-  `./js/app.js?${VERSION}`,
-  `./js/offline.js?${VERSION}`,
+  `./css/style.css?v=${VERSION}`,
+  `./css/responsive.css?v=${VERSION}`,
+  `./js/config.js?v=${VERSION}`,
+  `./js/utils.js?v=${VERSION}`,
+  `./js/icons.js?v=${VERSION}`,
+  `./js/api.js?v=${VERSION}`,
+  `./js/ui.js?v=${VERSION}`,
+  `./js/app.js?v=${VERSION}`,
+  `./js/offline.js?v=${VERSION}`,
   './manifest.json',
   './assets/icons/icon-192.svg',
   './assets/icons/icon-512.svg',

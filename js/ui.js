@@ -705,11 +705,11 @@ const UI = {
       const vals = slice('wind_speed_10m');
       if (!vals) return;
       const gusts = slice('wind_gusts_10m');
-      const all = gusts ? vals.concat(gusts) : vals;
+      const all = (gusts ? vals.concat(gusts) : vals).filter((v) => Number.isFinite(v));
       cfg = {
         values: vals, color: '#FFB74D', suffix: '',
         gusts: gusts, gustColor: '#E08A2E',
-        min: Math.min(...all), max: Math.max(...all),
+        min: all.length ? Math.min(...all) : 0, max: all.length ? Math.max(...all) : 0,
         legend: [
           { label: `Wind (${u})`, swatch: '#FFB74D' },
           ...(gusts ? [{ label: `Gusts (${u})`, swatch: '#E08A2E' }] : []),
@@ -761,8 +761,12 @@ const UI = {
       };
     }
 
-    const minT = cfg.min != null ? cfg.min : Math.min(...cfg.values, ...(cfg.second || []));
-    const maxT = cfg.max != null ? cfg.max : Math.max(...cfg.values, ...(cfg.second || []));
+    const finite = (arr) => arr.filter((v) => Number.isFinite(v));
+    const primary = finite(cfg.values || []);
+    const secondary = cfg.second ? finite(cfg.second) : [];
+    if (!primary.length && !secondary.length) return;
+    const minT = cfg.min != null ? cfg.min : Math.min(...primary, ...secondary);
+    const maxT = cfg.max != null ? cfg.max : Math.max(...primary, ...secondary);
     const span = Math.max(1, maxT - minT);
 
     // Grow left padding so the widest y-axis label (e.g. "1013 hPa") isn't clipped.

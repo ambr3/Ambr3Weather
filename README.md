@@ -97,7 +97,7 @@ Your data is your business. That's the whole point.
 | 🛡️ **CSP locked down** | `script-src 'self'`, `base-uri 'self'`, `form-action 'self'` — connects only to Open-Meteo and OSM |
 | 🕵️ **No referrer leakage** | `no-referrer` on every request |
 | 🚫 **Capabilities blocked** | Camera, microphone, sensors, and payment disabled via `Permissions-Policy` |
-| 🖼️ **Clickjacking protection** | `X-Frame-Options: DENY` / `frame-ancestors 'none'` enforced via server headers — sample [`.htaccess`](.htaccess) and [Netlify `_headers`](_headers) included |
+| 🖼️ **Clickjacking protection** | `frame-ancestors 'none'` in the CSP. Note: `frame-ancestors` is only honored as an HTTP header — GitHub Pages doesn't support custom headers, so it's in the `<meta>` tag where it's ignored (low risk: the app has no embed-friendly surface) |
 | 📜 **Auditable** | GPL-3.0 open source — read every line |
 
 > ⚠️ **Geolocation note:** your coordinates *are* sent to the weather API when you view a forecast or the map. It's the only way to get a local forecast — but it's disclosed, opt-in, and never logged or shared.
