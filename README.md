@@ -1,6 +1,6 @@
 # Ambr3Weather — Private Weather PWA
 
-A privacy-first, open-source Weather web app. All data stays on your device — no servers, no accounts, no tracking.
+A privacy-first, open-source Weather web app — no accounts, no analytics, no tracking cookies. Your preferences and a cached forecast are stored only on your device; the only outbound requests are to the Open-Meteo weather API and OpenStreetMap map tiles (see [Privacy](#privacy)).
 
 I would always recommend using Vanadium (GrapheneOS) or Brave Browser to install PWA's for max security. Please use at your own risk, this has been vibe-coded, all code has been read before each push but always check for security flaws before using. My coding is not the best. 
 

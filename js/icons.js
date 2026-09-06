@@ -5,8 +5,12 @@ const WeatherIcons = {
     const icons = {
       day_clear: this._sun,
       night_clear: this._moon,
+      day_clearsome: this._sunFewCloud,
+      night_clearsome: this._moonFewCloud,
       day_clouds: this._cloudSun,
       night_clouds: this._cloudMoon,
+      day_overcast: this._cloudOvercast,
+      night_overcast: this._cloudOvercast,
       day_fog: this._fogDay,
       night_fog: this._fogNight,
       day_drizzle: this._drizzleDay,
@@ -23,7 +27,9 @@ const WeatherIcons = {
 
   _group(code) {
     if (code === 0) return 'clear';
-    if (code <= 3) return 'clouds';
+    if (code === 1) return 'clearsome';
+    if (code === 2) return 'clouds';
+    if (code === 3) return 'overcast';
     if (code >= 45 && code <= 48) return 'fog';
     if (code >= 51 && code <= 57) return 'drizzle';
     if ((code >= 61 && code <= 67) || (code >= 80 && code <= 82)) return 'rain';
@@ -40,6 +46,23 @@ const WeatherIcons = {
     if (snow > 0 && pop >= 30) return 71;
     if (precip > 0 && pop >= 30) return 61;
     if (pop != null && pop >= 50) return 61;
+    return code;
+  },
+
+  // Daily forecast: the day's WMO code can be rain/drizzle even when only a
+  // brief spell occurred. Never show a precip icon unless the chance AND the
+  // amount justify it; otherwise fall back to a partly-cloudy look.
+  dailyIcon(code, pop, rainSum, snowSum) {
+    const g = this._group(code);
+    if (g === 'thunder' || g === 'fog' || g === 'clear' || g === 'clouds') return code;
+    const p = pop != null ? pop : 0;
+    const rain = rainSum != null ? rainSum : 0;
+    const snow = snowSum != null ? snowSum : 0;
+    const hasSnow = snow > 0 && p >= 30;
+    const hasRain = rain >= 1 && p >= 30;
+    const highChance = p >= 50;
+    if (g === 'snow') return (hasSnow || highChance) ? 71 : 2;
+    if (g === 'rain' || g === 'drizzle') return (hasRain || highChance) ? 61 : 2;
     return code;
   },
 
@@ -84,6 +107,31 @@ const WeatherIcons = {
       <line x1="54" y1="20" x2="57" y2="20"/>
     </g>
     ${WeatherIcons._cloudBase()}
+  `),
+
+  _sunFewCloud: () => WeatherIcons._svg(`
+    <circle cx="28" cy="26" r="13" fill="#FFD93D" stroke="#F5A623" stroke-width="1.5"/>
+    <g stroke="#FFD93D" stroke-width="2.5" stroke-linecap="round">
+      <line x1="28" y1="5" x2="28" y2="10"/>
+      <line x1="28" y1="42" x2="28" y2="47"/>
+      <line x1="7" y1="26" x2="12" y2="26"/>
+      <line x1="44" y1="26" x2="49" y2="26"/>
+    </g>
+    <ellipse cx="48" cy="42" rx="11" ry="7" fill="rgba(255,255,255,0.95)"/>
+    <circle cx="42" cy="36" r="7" fill="rgba(255,255,255,0.95)"/>
+  `),
+
+  _moonFewCloud: () => WeatherIcons._svg(`
+    <path d="M30 12c-9 0-16 7-16 16s7 16 16 16c1.6 0 3.1-.2 4.6-.7C30.4 48.8 27 46.4 25.5 43c-1.5-3.4-1-7.4 1.3-10.4 3-3.9 8.2-4.5 11.9-1.4 1 .8 1.7 1.8 2.2 2.9C41.6 30 36 12 30 12z" fill="#E8D44D" stroke="#C9A830" stroke-width="0.8" transform="translate(2,-2) scale(0.85)"/>
+    <ellipse cx="48" cy="42" rx="11" ry="7" fill="rgba(255,255,255,0.95)"/>
+    <circle cx="42" cy="36" r="7" fill="rgba(255,255,255,0.95)"/>
+  `),
+
+  _cloudOvercast: () => WeatherIcons._svg(`
+    <ellipse cx="32" cy="40" rx="22" ry="12" fill="rgba(185,192,200,0.98)" stroke="rgba(150,158,168,0.5)" stroke-width="1"/>
+    <circle cx="20" cy="30" r="12" fill="rgba(185,192,200,0.98)"/>
+    <circle cx="34" cy="27" r="14" fill="rgba(185,192,200,0.98)"/>
+    <circle cx="46" cy="33" r="9" fill="rgba(185,192,200,0.98)"/>
   `),
 
   _cloudMoon: () => WeatherIcons._svg(`

@@ -199,7 +199,7 @@ const Utils = {
   },
 
   getThemeClass(weatherCode, isDay) {
-    if (isDay === 0) return 'theme-clear-night';
+    if (isDay === 0 && weatherCode <= 2) return 'theme-clear-night';
     if (weatherCode === 0) return 'theme-clear';
     if (weatherCode <= 3) return 'theme-clouds';
     if (weatherCode >= 45 && weatherCode <= 48) return 'theme-mist';

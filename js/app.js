@@ -561,7 +561,7 @@ const App = {
     if (!panel) return;
     const open = show != null ? show : panel.classList.contains('hidden');
     panel.classList.toggle('hidden', !open);
-    btn.setAttribute('aria-expanded', String(open));
+    if (btn) btn.setAttribute('aria-expanded', String(open));
   },
 
   toggleUnitsMenu() {

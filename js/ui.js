@@ -91,7 +91,7 @@ const UI = {
     const c = data.current;
     const d = data.daily || {};
     const currentPop = (d.time && d.time[0]) ? this.daytimeMaxPop(d.time[0], data.hourly) : null;
-    const iconCode = WeatherIcons.adjustForPrecip(c.weather_code, currentPop, c.precipitation || 0, c.snowfall || 0);
+    const iconCode = WeatherIcons.adjustForPrecip(c.weather_code, currentPop, c.precipitation ?? 0, c.snowfall ?? 0);
     const icon = WeatherIcons.get(iconCode, c.is_day);
     const temp = Utils.formatTemp(c.temperature_2m, units);
     const feels = Utils.formatTemp(c.apparent_temperature, units);
@@ -169,7 +169,7 @@ const UI = {
       </div>
     `;
 
-    const theme = Utils.getThemeClass(c.weather_code, c.is_day);
+    const theme = Utils.getThemeClass(iconCode, c.is_day);
     const isDark = document.body.classList.contains('theme-dark');
     const isDyn = document.body.classList.contains('dynamic-text');
     document.body.classList.remove('theme-clear', 'theme-clear-night', 'theme-clouds',
@@ -231,8 +231,8 @@ const UI = {
     const precipNow = Utils.formatPrecip(c.precipitation, units) || (units === 'imperial' ? '0 in' : '0 mm');
     const todayPop = (d.time && d.time[0]) ? this.daytimeMaxPop(d.time[0], data.hourly) : null;
     const popToday = todayPop != null ? todayPop : (d.precipitation_probability_max != null ? Math.round(d.precipitation_probability_max[0] ?? 0) : null);
-    const rainToday = d.rain_sum ? Math.round(d.rain_sum[0] * 10) / 10 : null;
-    const snowToday = d.snowfall_sum ? d.snowfall_sum[0] : null;
+    const rainToday = d.rain_sum && d.rain_sum[0] != null ? Math.round(d.rain_sum[0] * 10) / 10 : null;
+    const snowToday = d.snowfall_sum && d.snowfall_sum[0] != null ? d.snowfall_sum[0] : null;
     const precipSub = [];
     if (popToday != null) precipSub.push(`${popToday}% chance today`);
     const snowLabel = Utils.formatSnow(snowToday, units);
@@ -242,8 +242,8 @@ const UI = {
     const windDir = c.wind_direction_10m != null ? Math.round(c.wind_direction_10m) : null;
     const windArrow = windDir != null ? this._windArrowSVG(windDir, 'detail-box__arrow', 36) : '';
 
-    const uv = d.uv_index_max ? d.uv_index_max[0] : null;
-    const uvClear = d.uv_index_clear_sky_max ? d.uv_index_clear_sky_max[0] : null;
+    const uv = d.uv_index_max && d.uv_index_max[0] != null ? d.uv_index_max[0] : null;
+    const uvClear = d.uv_index_clear_sky_max && d.uv_index_clear_sky_max[0] != null ? d.uv_index_clear_sky_max[0] : null;
     const uvInfo = uv != null ? Utils.getUVLevel(uv) : null;
 
     const windSpeed = c.wind_speed_10m != null ? Math.round(c.wind_speed_10m) : null;
@@ -497,7 +497,7 @@ const UI = {
       const snowSum = daily.snowfall_sum ? daily.snowfall_sum[i] : null;
       const sunshine = daily.sunshine_duration ? daily.sunshine_duration[i] : null;
       const weatherCode = daily.weather_code[i];
-      const iconCode = WeatherIcons.adjustForPrecip(weatherCode, pop, rainSum || 0, snowSum || 0);
+      const iconCode = WeatherIcons.dailyIcon(weatherCode, pop, rainSum ?? 0, snowSum ?? 0);
       const icon = WeatherIcons.get(iconCode, true);
 
       const d = Utils.parseLocal(date + 'T00:00:00', this._tz);
@@ -514,11 +514,14 @@ const UI = {
            </div>`
         : `<div class="forecast-card__stat"><span class="forecast-card__stat-label">Wind</span><div class="forecast-card__stat-info"><span class="forecast-card__stat-value">—</span></div></div>`;
 
+      const iconShowsPrecip = iconCode === 61 || iconCode === 71;
       let precipVal = '—';
       let precipSub = 'dry';
       const snowLabel = Utils.formatSnow(snowSum, units);
-      if (snowLabel) { precipVal = snowLabel; precipSub = 'snow'; }
-      else if (rainSum != null && rainSum > 0) { precipVal = Utils.formatPrecip(rainSum, units) || '—'; precipSub = 'rain'; }
+      if (iconShowsPrecip && snowLabel) { precipVal = snowLabel; precipSub = 'snow'; }
+      else if (iconShowsPrecip && rainSum != null && rainSum > 0) { precipVal = Utils.formatPrecip(rainSum, units) || '—'; precipSub = 'rain'; }
+      else if (snowLabel) { precipVal = snowLabel; precipSub = 'snow (trace)'; }
+      else if (rainSum != null && rainSum > 0) { precipVal = Utils.formatPrecip(rainSum, units) || '—'; precipSub = 'trace'; }
 
       const sunStat = sunshine != null
         ? `<div class="forecast-card__stat">
@@ -611,8 +614,8 @@ const UI = {
       const pop = hourly.precipitation_probability ? hourly.precipitation_probability[idx] : null;
       const wind = hourly.wind_speed_10m && hourly.wind_speed_10m[idx] != null ? Math.round(hourly.wind_speed_10m[idx]) : null;
       const windDir = hourly.wind_direction_10m && hourly.wind_direction_10m[idx] != null ? Math.round(hourly.wind_direction_10m[idx]) : null;
-      const precipNow = hourly.precipitation ? hourly.precipitation[idx] || 0 : 0;
-      const snowNow = hourly.snowfall ? hourly.snowfall[idx] || 0 : 0;
+      const precipNow = hourly.precipitation && hourly.precipitation[idx] != null ? hourly.precipitation[idx] : 0;
+      const snowNow = hourly.snowfall && hourly.snowfall[idx] != null ? hourly.snowfall[idx] : 0;
       const iconCode = WeatherIcons.adjustForPrecip(hourly.weather_code[idx], pop, precipNow, snowNow);
       const icon = WeatherIcons.get(iconCode, hourly.is_day && hourly.is_day[idx] != null ? hourly.is_day[idx] : 1);
 
@@ -794,8 +797,9 @@ const UI = {
       xlabels += `<text x="${x(i).toFixed(1)}" y="${H - 12}" text-anchor="middle" font-size="18" font-weight="600" fill="currentColor" fill-opacity="0.9">${Utils.formatHourShort(times[i], this._tz)}</text>`;
     }
     if (labelStep < 24) {
-      const firstDate = Utils.parseLocal(times[0], this._tz);
-      const dayEnd = new Date(firstDate.getFullYear(), firstDate.getMonth(), firstDate.getDate() + 1);
+      const parts = times[0].slice(0, 10).split('-').map(Number);
+      const next = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2] + 1)).toISOString().slice(0, 10) + 'T00:00:00';
+      const dayEnd = Utils.parseLocal(next, this._tz);
       xlabels += `<text x="${x(times.length).toFixed(1)}" y="${H - 12}" text-anchor="end" font-size="18" font-weight="600" fill="currentColor" fill-opacity="0.9">${Utils.formatHourShort(dayEnd, this._tz)}</text>`;
     }
 
