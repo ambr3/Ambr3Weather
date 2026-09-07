@@ -5,6 +5,20 @@ const UI = {
   _chartMode: 'temp',
   _measureCanvas: null,
   _measureCtx: null,
+  _hourly: null,
+  _hourlyStart: 0,
+  _hourlyCount: 0,
+  _forecastDaily: null,
+  _forecastCount: 0,
+  _forecastUnits: 'metric',
+  _forecastHourly: null,
+  _modalUnits: 'metric',
+  _modalMode: 'hourly',
+  _modalCount: 0,
+  _modalIndex: null,
+  _modalOpen: false,
+  _hourlyModalBound: false,
+  _modalKeyHandler: null,
 
   _getMeasureCtx() {
     if (!this._measureCanvas) {
@@ -138,8 +152,10 @@ const UI = {
         <div class="current-weather__temp">${temp}</div>
         ${daySummary ? `<div class="current-weather__summary">${daySummary}</div>` : ''}
       </div>
-      <div class="current-weather__feels">Feels like ${feels}</div>
-      <div class="current-weather__updated" id="currentUpdated">Updated ${Utils.formatClock(new Date())}</div>
+      <div class="current-weather__meta">
+        <div class="current-weather__feels">Feels like ${feels}</div>
+        <div class="current-weather__updated" id="currentUpdated">Updated ${Utils.formatClock(new Date())}</div>
+      </div>
       <div class="current-weather__celestial">
         <div class="celestial">
           <div class="celestial__title">Sun</div>
@@ -485,7 +501,12 @@ const UI = {
 
   renderForecast(daily, units, days, hourly) {
     if (!daily || !daily.time || !daily.time.length) return;
+    if (this._modalOpen) this.closeHourlyDetail();
     const end = days >= 14 ? 14 : 7;
+    this._forecastDaily = daily;
+    this._forecastCount = Math.min(end, daily.time.length);
+    this._forecastUnits = units;
+    this._forecastHourly = hourly;
     const windUnit = Utils.getWindUnit(UI.windUnit);
     const cards = daily.time.slice(0, end).map((date, i) => {
       const max = daily.temperature_2m_max && daily.temperature_2m_max[i] != null ? Math.round(daily.temperature_2m_max[i]) : '—';
@@ -533,8 +554,10 @@ const UI = {
            </div>`
         : `<div class="forecast-card__stat"><span class="forecast-card__stat-label">Sun</span><div class="forecast-card__stat-info"><span class="forecast-card__stat-value">—</span></div></div>`;
 
+      const label = Utils.getWeatherDescription(iconCode);
+
       return `
-        <div class="forecast-card" role="listitem">
+        <div class="forecast-card" role="listitem" data-i="${i}">
           <div class="forecast-card__top">
             <div class="forecast-card__day">
               <span class="forecast-card__weekday">${weekday}</span>
@@ -546,7 +569,10 @@ const UI = {
             </div>
           </div>
           <div class="forecast-card__main">
-            <div class="forecast-card__icon">${icon}</div>
+            <div class="forecast-card__icon-wrap">
+              <div class="forecast-card__icon">${icon}</div>
+              <div class="forecast-card__label">${label}</div>
+            </div>
             <div class="forecast-card__temps">
               <div class="forecast-card__temp-block">
                 <span class="forecast-card__temp-label">High</span>
@@ -580,9 +606,14 @@ const UI = {
 
   renderHourly(hourly, units) {
     if (!hourly || !hourly.time || !hourly.time.length) return;
+    if (this._modalOpen) this.closeHourlyDetail();
     const startIdx = this._hourlyStartIdx(hourly);
     const windUnit = Utils.getWindUnit(UI.windUnit);
     const count = this._hourlyAll ? hourly.time.length - startIdx : 24;
+    this._hourly = hourly;
+    this._hourlyStart = startIdx;
+    this._hourlyCount = Math.min(Math.max(count, 0), Math.max(0, hourly.time.length - startIdx));
+    this._modalUnits = units;
 
     let todayKey = null;
     let tomorrowKey = null;
@@ -618,6 +649,7 @@ const UI = {
       const snowNow = hourly.snowfall && hourly.snowfall[idx] != null ? hourly.snowfall[idx] : 0;
       const iconCode = WeatherIcons.adjustForPrecip(hourly.weather_code[idx], pop, precipNow, snowNow);
       const icon = WeatherIcons.get(iconCode, hourly.is_day && hourly.is_day[idx] != null ? hourly.is_day[idx] : 1);
+      const desc = Utils.getWeatherDescription(iconCode);
 
       const dateKey = time.slice(0, 10);
       const showDate = i === 0 || dateKey !== prevKey;
@@ -642,10 +674,11 @@ const UI = {
       const isFirst = i === 0;
 
       return `
-        <div class="hourly-card${isFirst ? ' hourly-card--now' : ''}" role="listitem">
+        <div class="hourly-card${isFirst ? ' hourly-card--now' : ''}" role="listitem" data-i="${i}">
           <div class="hourly-card__date">${dateLabel}</div>
           <div class="hourly-card__time">${timeLabel}</div>
           <div class="hourly-card__icon">${icon}</div>
+          <div class="hourly-card__label">${desc}</div>
           <div class="hourly-card__temp${isFirst ? ' hourly-card__temp--solid' : ''}">${temp}</div>
           ${feelsLike ? `<div class="hourly-card__feels">Feels ${feelsLike}</div>` : ''}
           <div class="hourly-card__stats">
@@ -667,6 +700,269 @@ const UI = {
     }).join('');
 
     this.$('hourlyScroll').innerHTML = cards;
+    if (!this._hourlyModalBound) this._bindHourlyModal();
+  },
+
+  _bindHourlyModal() {
+    const scroll = this.$('hourlyScroll');
+    const modal = this.$('hourlyModal');
+    if (!scroll || !modal) return;
+
+    scroll.addEventListener('click', (e) => {
+      const card = e.target.closest('.hourly-card');
+      if (card && !this._modalOpen) this.openHourlyDetail(parseInt(card.dataset.i, 10) || 0);
+    });
+
+    const fScroll = this.$('forecastCards');
+    if (fScroll) {
+      fScroll.addEventListener('click', (e) => {
+        const card = e.target.closest('.forecast-card');
+        if (card && !this._modalOpen) this.openForecastDetail(parseInt(card.dataset.i, 10) || 0);
+      });
+    }
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal || e.target.classList.contains('hourly-modal__backdrop')) {
+        this.closeHourlyDetail();
+        return;
+      }
+      if (e.target.closest('.hourly-modal__close')) { this.closeHourlyDetail(); return; }
+      if (e.target.closest('.hourly-modal__nav--prev')) { this._navModal(-1); return; }
+      if (e.target.closest('.hourly-modal__nav--next')) { this._navModal(1); return; }
+    });
+
+    let startX = null, startY = null, dx = 0, dy = 0, down = false;
+    modal.addEventListener('pointerdown', (e) => {
+      if (!e.target.closest('.hourly-modal__card')) return;
+      down = true; startX = e.clientX; startY = e.clientY; dx = 0; dy = 0;
+    });
+    modal.addEventListener('pointermove', (e) => {
+      if (!down) return;
+      dx = e.clientX - startX; dy = e.clientY - startY;
+    });
+    modal.addEventListener('pointerup', () => {
+      if (!down) return;
+      down = false;
+      const ax = Math.abs(dx), ay = Math.abs(dy);
+      if (ax > 55 && ax > ay * 1.2) this._navModal(dx < 0 ? 1 : -1);
+    });
+    modal.addEventListener('pointercancel', () => { down = false; });
+
+    this._addModalKeyHandler();
+    this._hourlyModalBound = true;
+  },
+
+  _addModalKeyHandler() {
+    if (this._modalKeyHandler) return;
+    this._modalKeyHandler = (e) => {
+      if (!this._modalOpen) return;
+      if (e.key === 'Escape') this.closeHourlyDetail();
+      else if (e.key === 'ArrowLeft') this._navModal(-1);
+      else if (e.key === 'ArrowRight') this._navModal(1);
+    };
+    document.addEventListener('keydown', this._modalKeyHandler);
+  },
+
+  openHourlyDetail(i) {
+    if (!this._hourly || !this._hourly.time || !this._hourlyCount) return;
+    this._modalMode = 'hourly';
+    this._modalCount = this._hourlyCount;
+    this._modalIndex = Math.max(0, Math.min(this._hourlyCount - 1, i));
+    this._modalOpen = true;
+    this._addModalKeyHandler();
+    this._renderHourlyModal();
+  },
+
+  openForecastDetail(i) {
+    if (!this._forecastDaily || !this._forecastDaily.time || !this._forecastCount) return;
+    this._modalMode = 'forecast';
+    this._modalCount = this._forecastCount;
+    this._modalIndex = Math.max(0, Math.min(this._forecastCount - 1, i));
+    this._modalOpen = true;
+    this._addModalKeyHandler();
+    this._renderHourlyModal();
+  },
+
+  _navModal(dir) {
+    if (this._modalIndex == null || this._modalCount == null) return;
+    const n = this._modalIndex + dir;
+    if (n < 0 || n >= this._modalCount) return;
+    this._modalIndex = n;
+    this._renderHourlyModal();
+  },
+
+  closeHourlyDetail() {
+    const modal = this.$('hourlyModal');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.innerHTML = '';
+    }
+    this._modalOpen = false;
+    document.body.classList.remove('has-modal');
+    if (this._modalKeyHandler) {
+      document.removeEventListener('keydown', this._modalKeyHandler);
+      this._modalKeyHandler = null;
+    }
+  },
+
+  _renderHourlyModal() {
+    if (this._modalMode === 'forecast') { this._renderForecastModal(); return; }
+    const modal = this.$('hourlyModal');
+    if (!modal || !this._hourly) return;
+    const h = this._hourly;
+    const idx = this._hourlyStart + this._modalIndex;
+    const time = h.time && h.time[idx];
+    if (time == null) { this.closeHourlyDetail(); return; }
+
+    const units = this._modalUnits || 'metric';
+    const temp = h.temperature_2m && h.temperature_2m[idx] != null ? Utils.formatTemp(h.temperature_2m[idx], units) : '—';
+    const feels = h.apparent_temperature && h.apparent_temperature[idx] != null ? Utils.formatTemp(h.apparent_temperature[idx], units) : null;
+    const pop = h.precipitation_probability ? h.precipitation_probability[idx] : null;
+    const precip = h.precipitation ? h.precipitation[idx] : 0;
+    const snow = h.snowfall ? h.snowfall[idx] : 0;
+    const wind = h.wind_speed_10m && h.wind_speed_10m[idx] != null ? Math.round(h.wind_speed_10m[idx]) : null;
+    const windDir = h.wind_direction_10m && h.wind_direction_10m[idx] != null ? Math.round(h.wind_direction_10m[idx]) : null;
+    const humidity = h.relative_humidity_2m && h.relative_humidity_2m[idx] != null ? `${Math.round(h.relative_humidity_2m[idx])}%` : null;
+    const pressure = h.pressure_msl && h.pressure_msl[idx] != null ? Utils.formatPressure(h.pressure_msl[idx], UI.pressUnit) : null;
+    const cloud = h.cloud_cover && h.cloud_cover[idx] != null ? `${Math.round(h.cloud_cover[idx])}%` : null;
+    const visibility = h.visibility && h.visibility[idx] != null ? Utils.formatVisibility(h.visibility[idx], UI.visUnit) : null;
+    const windUnit = Utils.getWindUnit(UI.windUnit);
+    const windVal = wind != null ? `${wind} ${windUnit}${windDir != null ? ` ${Utils.getWindDirection(windDir)}` : ''}` : null;
+
+    const iconCode = WeatherIcons.adjustForPrecip(h.weather_code[idx], pop, precip, snow);
+    const icon = WeatherIcons.get(iconCode, h.is_day && h.is_day[idx] != null ? h.is_day[idx] : 1);
+    const desc = Utils.getWeatherDescription(iconCode);
+
+    const stat = (label, value) => value != null
+      ? `<div class="hourly-modal__stat"><span class="hourly-modal__stat-label">${label}</span><span class="hourly-modal__stat-value">${value}</span></div>`
+      : '';
+
+    const tLabel = this._modalIndex === 0 ? 'Now' : Utils.formatHourShort(time, this._tz);
+    let dLabel = '';
+    const dateKey = String(time).slice(0, 10);
+    try {
+      const dtf = new Intl.DateTimeFormat('en-CA', {
+        timeZone: this._tz, year: 'numeric', month: '2-digit', day: '2-digit',
+      });
+      const today = dtf.format(new Date());
+      const [y, m, d] = today.split('-').map(Number);
+      const next = new Date(y, m - 1, d + 1);
+      const tomorrow = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`;
+      if (dateKey === today) dLabel = 'Today';
+      else if (dateKey === tomorrow) dLabel = 'Tomorrow';
+      else dLabel = Utils.parseLocal(time, this._tz).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    } catch {
+      dLabel = Utils.parseLocal(time, this._tz).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+
+    modal.innerHTML = `
+      <div class="hourly-modal__backdrop"></div>
+      <div class="hourly-modal__card">
+        <button type="button" class="hourly-modal__nav hourly-modal__nav--prev" aria-label="Previous hour">&lsaquo;</button>
+        <div class="hourly-modal__body">
+          <button type="button" class="hourly-modal__close" aria-label="Close">&times;</button>
+          <div class="hourly-modal__date">${dLabel}</div>
+          <div class="hourly-modal__time">${tLabel}</div>
+          <div class="hourly-modal__icon">${icon}</div>
+          <div class="hourly-modal__temp">${temp}</div>
+          <div class="hourly-modal__desc">${desc}</div>
+          <div class="hourly-modal__stats">
+            ${stat('Feels like', feels)}
+            ${stat('Rain chance', pop != null ? `${Math.round(pop)}%` : null)}
+            ${stat('Precipitation', Utils.formatPrecip(precip, units))}
+            ${stat('Snow', Utils.formatSnow(snow, units))}
+            ${stat('Humidity', humidity)}
+            ${stat('Wind', windVal)}
+            ${stat('Pressure', pressure)}
+            ${stat('Cloud cover', cloud)}
+            ${stat('Visibility', visibility)}
+          </div>
+          <div class="hourly-modal__hint">Swipe or use <kbd>&larr;</kbd> <kbd>&rarr;</kbd> to browse hours</div>
+        </div>
+        <button type="button" class="hourly-modal__nav hourly-modal__nav--next" aria-label="Next hour">&rsaquo;</button>
+      </div>
+    `;
+
+    modal.classList.remove('hidden');
+    document.body.classList.add('has-modal');
+    const focus = modal.querySelector('.hourly-modal__close');
+    if (focus) focus.focus();
+  },
+
+  _renderForecastModal() {
+    const modal = this.$('hourlyModal');
+    if (!modal || !this._forecastDaily) return;
+    const d = this._forecastDaily;
+    const i = this._modalIndex;
+    const date = d.time && d.time[i];
+    if (date == null) { this.closeHourlyDetail(); return; }
+
+    const units = this._forecastUnits || 'metric';
+    const high = d.temperature_2m_max && d.temperature_2m_max[i] != null ? Utils.formatTemp(d.temperature_2m_max[i], units) : '—';
+    const low = d.temperature_2m_min && d.temperature_2m_min[i] != null ? Utils.formatTemp(d.temperature_2m_min[i], units) : '—';
+    const feelsHigh = d.apparent_temperature_max && d.apparent_temperature_max[i] != null ? Utils.formatTemp(d.apparent_temperature_max[i], units) : null;
+    const feelsLow = d.apparent_temperature_min && d.apparent_temperature_min[i] != null ? Utils.formatTemp(d.apparent_temperature_min[i], units) : null;
+    const pop = this.daytimeMaxPop(date, this._forecastHourly) ?? (d.precipitation_probability_max != null ? Math.round(d.precipitation_probability_max[i] ?? 0) : 0);
+    const rainSum = d.rain_sum ? d.rain_sum[i] : null;
+    const snowSum = d.snowfall_sum ? d.snowfall_sum[i] : null;
+    const windMax = d.wind_speed_10m_max && d.wind_speed_10m_max[i] != null ? Math.round(d.wind_speed_10m_max[i]) : null;
+    const gustMax = d.wind_gusts_10m_max && d.wind_gusts_10m_max[i] != null ? Math.round(d.wind_gusts_10m_max[i]) : null;
+    const windDir = d.wind_direction_10m_dominant && d.wind_direction_10m_dominant[i] != null ? Math.round(d.wind_direction_10m_dominant[i]) : null;
+    const uv = d.uv_index_max && d.uv_index_max[i] != null ? d.uv_index_max[i] : null;
+    const sunshine = d.sunshine_duration ? d.sunshine_duration[i] : null;
+    const sunrise = d.sunrise && d.sunrise[i] ? Utils.formatTime(d.sunrise[i], this._tz) : null;
+    const sunset = d.sunset && d.sunset[i] ? Utils.formatTime(d.sunset[i], this._tz) : null;
+
+    const iconCode = WeatherIcons.dailyIcon(d.weather_code[i], pop, rainSum ?? 0, snowSum ?? 0);
+    const icon = WeatherIcons.get(iconCode, true);
+    const desc = Utils.getWeatherDescription(iconCode);
+    const windUnit = Utils.getWindUnit(UI.windUnit);
+    const uvInfo = uv != null ? Utils.getUVLevel(uv) : null;
+    const feelsVal = feelsHigh != null && feelsLow != null ? `${feelsHigh} / ${feelsLow}` : null;
+
+    const stat = (label, value) => value != null
+      ? `<div class="hourly-modal__stat"><span class="hourly-modal__stat-label">${label}</span><span class="hourly-modal__stat-value">${value}</span></div>`
+      : '';
+
+    const parsed = Utils.parseLocal(date + 'T00:00:00', this._tz);
+    const weekday = i === 0 ? 'Today' : parsed.toLocaleDateString('en-US', { timeZone: this._tz || undefined, weekday: 'long' });
+    const dateHeading = parsed.toLocaleDateString('en-US', { timeZone: this._tz || undefined, month: 'long', day: 'numeric' });
+    const windVal = windMax != null
+      ? `${windMax} ${windUnit}${gustMax != null ? ` · gusts ${gustMax}` : ''}${windDir != null ? ` ${Utils.getWindDirection(windDir)}` : ''}`
+      : null;
+
+    modal.innerHTML = `
+      <div class="hourly-modal__backdrop"></div>
+      <div class="hourly-modal__card">
+        <button type="button" class="hourly-modal__nav hourly-modal__nav--prev" aria-label="Previous day">&lsaquo;</button>
+        <div class="hourly-modal__body">
+          <button type="button" class="hourly-modal__close" aria-label="Close">&times;</button>
+          <div class="hourly-modal__date">${weekday}</div>
+          <div class="hourly-modal__time">${dateHeading}</div>
+          <div class="hourly-modal__icon">${icon}</div>
+          <div class="hourly-modal__temp">${high}<span class="hourly-modal__temp-low"> / ${low}</span></div>
+          <div class="hourly-modal__desc">${desc}</div>
+          <div class="hourly-modal__stats">
+            ${stat('Feels like', feelsVal)}
+            ${stat('Rain chance', `${Math.round(pop)}%`)}
+            ${stat('Precipitation', Utils.formatPrecip(rainSum, units))}
+            ${stat('Snow', Utils.formatSnow(snowSum, units))}
+            ${stat('Wind', windVal)}
+            ${uv != null ? stat('UV index', uvInfo ? `<span style="color:${uvInfo.color}">${uv} ${uvInfo.label}</span>` : String(uv)) : ''}
+            ${stat('Sunshine', sunshine != null ? Utils.formatDuration(sunshine) : null)}
+            ${stat('Sunrise', sunrise)}
+            ${stat('Sunset', sunset)}
+          </div>
+          <div class="hourly-modal__hint">Swipe or use <kbd>&larr;</kbd> <kbd>&rarr;</kbd> to browse days</div>
+        </div>
+        <button type="button" class="hourly-modal__nav hourly-modal__nav--next" aria-label="Next day">&rsaquo;</button>
+      </div>
+    `;
+
+    modal.classList.remove('hidden');
+    document.body.classList.add('has-modal');
+    const focus = modal.querySelector('.hourly-modal__close');
+    if (focus) focus.focus();
   },
 
   renderHourlyChart(hourly, units) {
@@ -697,7 +993,7 @@ const UI = {
       if (!pops) return;
       cfg = {
         min: 0, max: 100, suffix: '%',
-        bars: pops, barH: 1,
+        values: pops, color: '#7EC8E3', cells: true,
         legend: [{ label: 'chance of rain', swatch: '#7EC8E3' }],
       };
     } else if (mode === 'wind') {
@@ -727,8 +1023,8 @@ const UI = {
       if (!vals) return;
       cfg = {
         min: 0, max: 100, suffix: '%',
-        bars: vals, barH: 1,
-        legend: [{ label: 'Cloud cover (%)', swatch: '#90A4AE' }],
+        values: vals, color: '#6D7D8B', cells: true,
+        legend: [{ label: 'Cloud cover (%)', swatch: '#6D7D8B' }],
       };
     } else if (mode === 'pressure') {
       const raw = slice('pressure_msl');
@@ -807,19 +1103,24 @@ const UI = {
       xlabels += `<text x="${x(times.length).toFixed(1)}" y="${H - 12}" text-anchor="end" font-size="18" font-weight="600" fill="currentColor" fill-opacity="0.9">${Utils.formatHourShort(dayEnd, this._tz)}</text>`;
     }
 
-    let bars = '';
-    if (cfg.bars) {
-      const barW = (iw / times.length) * 0.55;
-      cfg.bars.forEach((p, i) => {
-        if (p > 0) {
-          const bh = (p / 100) * ih * (cfg.barH || 0.4);
-          bars += `<rect x="${(x(i) - barW / 2).toFixed(1)}" y="${(H - padB - bh).toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="2" fill="#7EC8E3" stroke="rgba(255,255,255,0.9)" stroke-width="1"/>`;
-        }
+    let line = '', dots = '', cells = '', defs = '';
+    if (cfg.cells) {
+      const cellW = iw / times.length;
+      const bandH = 62;
+      const baseY = H - padB;
+      defs = `<filter id="cellGlow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="${Math.max(2, cellW * 0.35).toFixed(1)}"/></filter>`;
+      cfg.values.forEach((t, i) => {
+        if (!Number.isFinite(t)) return;
+        const h = Math.max(3, (t / 100) * bandH);
+        const op = (0.26 + 0.74 * (t / 100)).toFixed(2);
+        const x0 = (x(i) - cellW / 2).toFixed(1);
+        const y0 = (baseY - h).toFixed(1);
+        const rx = Math.max(2, cellW / 2).toFixed(1);
+        cells += `<rect x="${x0}" y="${y0}" width="${cellW.toFixed(1)}" height="${h.toFixed(1)}" rx="${rx}" fill="${cfg.color}" filter="url(#cellGlow)" fill-opacity="${(op * 0.7).toFixed(2)}"/>`;
+        cells += `<rect x="${x0}" y="${y0}" width="${cellW.toFixed(1)}" height="${h.toFixed(1)}" rx="${rx}" fill="${cfg.color}" fill-opacity="${op}"/>`;
       });
-    }
-
-    let line = '', dots = '', defs = '';
-    if (cfg.values) {
+      cells += `<rect x="${padL}" y="${(baseY - 1).toFixed(1)}" width="${iw.toFixed(1)}" height="1" fill="currentColor" fill-opacity="0.15"/>`;
+    } else if (cfg.values) {
       const points = cfg.values.map((t, i) => `${x(i).toFixed(1)},${y(t).toFixed(1)}`).join(' ');
       const area = `${padL},${(padT + ih).toFixed(1)} ${points} ${x(times.length - 1).toFixed(1)},${(padT + ih).toFixed(1)}`;
       const gustPoints = cfg.gusts ? cfg.gusts.map((t, i) => `${x(i).toFixed(1)},${y(t).toFixed(1)}`).join(' ') : '';
@@ -841,9 +1142,10 @@ const UI = {
         if (gustPoints) {
           line += `<polyline points="${gustPoints}" fill="none" stroke="${cfg.gustColor}" stroke-width="3" stroke-dasharray="8 5" stroke-linecap="round" stroke-linejoin="round"/>`;
         }
-        dots = cfg.values.map((t, i) =>
-          `<circle cx="${x(i).toFixed(1)}" cy="${y(t).toFixed(1)}" r="4" fill="${cfg.color}" stroke="rgba(255,255,255,0.85)" stroke-width="1.2"/>`
-        ).join('');
+        dots = cfg.values.map((t, i) => {
+          if (!Number.isFinite(t)) return '';
+          return `<circle cx="${x(i).toFixed(1)}" cy="${y(t).toFixed(1)}" r="4" fill="${cfg.color}" stroke="rgba(255,255,255,0.85)" stroke-width="1.2"/>`;
+        }).join('');
       }
       if (cfg.second && cfg.second.length) {
         const dpPoints = cfg.second.map((t, i) => `${x(i).toFixed(1)},${y(t).toFixed(1)}`).join(' ');
@@ -861,9 +1163,9 @@ const UI = {
         <defs>${defs}</defs>
         ${grid}
         ${xlabels}
+        ${cells}
         ${line}
         ${dots}
-        ${bars}
       </svg>
       ${cfg.legend && cfg.legend.length ? `
         <div class="hourly-chart__legend">

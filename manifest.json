@@ -1,7 +1,7 @@
 {
   "name": "Ambr3Weather - Private Weather",
   "short_name": "Ambr3Weather",
-  "description": "A privacy-first weather app. No tracking, no ads, no cookies.",
+  "description": "No tracking. No ads. No cookies.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

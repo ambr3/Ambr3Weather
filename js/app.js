@@ -524,11 +524,13 @@ const App = {
 
     let active = false;
     let lastX = 0;
+    let moved = 0;
 
     const onMove = (e) => {
       if (!active) return;
       e.preventDefault();
       const dx = e.clientX - lastX;
+      moved += Math.abs(dx);
       lastX = e.clientX;
       el.scrollLeft -= dx;
     };
@@ -544,10 +546,17 @@ const App = {
       window.removeEventListener('mouseup', onUp);
     };
 
+    const swallowClick = (e) => {
+      if (moved > 8) { e.stopPropagation(); e.preventDefault(); }
+      moved = 0;
+    };
+    el.addEventListener('click', swallowClick, true);
+
     el.addEventListener('mousedown', (e) => {
       if (touchSeen || e.button !== 0) return;
       if (el.scrollWidth <= el.clientWidth) return;
       active = true;
+      moved = 0;
       lastX = e.clientX;
       el.style.cursor = 'grabbing';
       el.style.userSelect = 'none';

@@ -169,18 +169,15 @@ const WeatherIcons = {
     <line x1="45" y1="47" x2="39" y2="66" stroke="#2E7FD9" stroke-width="3" stroke-linecap="round"/>
   `,
 
-  // Drizzle: three long dotted streaks (small blue dots stacked) — clearly finer
-  // than snow flakes and dashed vs the solid rain streaks.
+  // Drizzle: a few large, well-separated blue droplets — sparse and dotted so
+  // on small icons it never reads the same as the solid rain streaks.
   _drizzleLines: () => `
-    <circle cx="24" cy="55" r="1.7" fill="#5C9BD6"/>
-    <circle cx="23" cy="59.5" r="1.7" fill="#5C9BD6"/>
-    <circle cx="24" cy="64" r="1.7" fill="#5C9BD6"/>
-    <circle cx="36" cy="55" r="1.6" fill="#5C9BD6"/>
-    <circle cx="35" cy="59.5" r="1.6" fill="#5C9BD6"/>
-    <circle cx="36" cy="64" r="1.6" fill="#5C9BD6"/>
-    <circle cx="48" cy="55" r="1.7" fill="#5C9BD6"/>
-    <circle cx="47" cy="59.5" r="1.7" fill="#5C9BD6"/>
-    <circle cx="48" cy="64" r="1.7" fill="#5C9BD6"/>
+    <circle cx="25" cy="52" r="2.8" fill="#5C9BD6"/>
+    <circle cx="24" cy="65" r="2.6" fill="#5C9BD6"/>
+    <circle cx="36" cy="52" r="2.5" fill="#5C9BD6"/>
+    <circle cx="35" cy="64" r="2.3" fill="#5C9BD6"/>
+    <circle cx="47" cy="52" r="2.8" fill="#5C9BD6"/>
+    <circle cx="46" cy="65" r="2.6" fill="#5C9BD6"/>
   `,
 
   _snowDots: () => `

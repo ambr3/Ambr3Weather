@@ -19,7 +19,6 @@
 
 <p align="center">
   <a href="#features">Features</a> ·
-  <a href="#weather-icons">Weather Icons</a> ·
   <a href="#privacy">Privacy</a> ·
   <a href="#installation">Installation</a> ·
   <a href="#license">License</a>
@@ -54,30 +53,9 @@ Ambr3Weather is a **pure static, open-source weather app**. Everything runs in y
 
 ### 🎨 Interface
 - **Dark / light themes** with dynamic weather backgrounds at sunrise, rain, snow, thunder, fog, and night
-- **Inline SVG weather icons** — distinct day/night variants for every WMO code
 - **Metric / imperial toggle** — saved between visits
 - **Touch & mouse drag gestures** on the hourly forecast
 - Smooth fade-in animations, fully responsive
-
----
-
-## ☀️ Weather Icons
-
-Weather icons are drawn from accurate WMO weather codes, with **day and night variants**, and a few honest touches:
-
-| WMO code | Condition | Day | Night |
-|---|---|---|---|
-| 0 | Clear sky | 🌞 | 🌙 |
-| 1 | Mainly clear | 🌞 + small cloud | 🌙 + small cloud |
-| 2 | Partly cloudy | ⛅ cloud with sun peeking | cloud with moon |
-| 3 | Overcast | ☁️ full cloud | ☁️ full cloud |
-| 45–48 | Fog / rime | fog lines | fog lines |
-| 51–57 | Drizzle | light drops | light drops |
-| 61–67, 80–82 | Rain / showers | raindrops | raindrops |
-| 71–77, 85–86 | Snow / snow showers | snowflakes | snowflakes |
-| 95+ | Thunderstorm | lightning bolt | lightning bolt |
-
-> **Honest rain icons** — the daily forecast only shows a rain icon when the *chance* **and** the *amount* justify it (`≥ 30 %` chance **and** `≥ 1 mm`, or `≥ 50 %` chance). A 25 % chance of 0.2 mm won't rain on your parade.
 
 ---
 
@@ -88,17 +66,17 @@ Your data is your business. That's the whole point.
 | | |
 |---|---|
 | 🚫 **Zero tracking** | No analytics, no cookies, no fingerprinting, no third-party scripts |
-| 🖥️ **No server** | Pure static site — nothing runs server-side |
+| 🖥️ **No server** | Pure static site — nothing runs on a server |
 | 🔑 **No API key** | Powered by free open-source [Open-Meteo](https://open-meteo.com/), no account needed |
-| 🏠 **Stays on device** | Preferences, last location, and cached forecast live in your browser's `localStorage`/cache — never sent anywhere |
-| 📤 **What leaves** | Forecasts (with coordinates) go to Open-Meteo on load/auto-refresh; the map loads tiles from OpenStreetMap. *That's it.* No tracking headers attached |
-| 🧹 **Cache pruning** | Service-worker API cache self-destructs after 7 days |
+| 🏠 **Stays on device** | Preferences, last location, and cached forecast never leave your device |
+| 📤 **What leaves** | Forecasts (with coordinates) go to Open-Meteo; map tiles come from OpenStreetMap. Nothing else |
+| 🧹 **Self-cleaning cache** | Old cached data removes itself after 7 days |
 | 📍 **Geolocation opt-in** | Only on button tap, sent only to Open-Meteo + OpenStreetMap |
-| 🛡️ **CSP locked down** | `script-src 'self'`, `base-uri 'self'`, `form-action 'self'` — connects only to Open-Meteo and OSM |
-| 🕵️ **No referrer leakage** | `no-referrer` on every request |
-| 🚫 **Capabilities blocked** | Camera, microphone, sensors, and payment disabled via `Permissions-Policy` |
-| 🖼️ **Clickjacking protection** | `frame-ancestors 'none'` in the CSP. Note: `frame-ancestors` is only honored as an HTTP header — GitHub Pages doesn't support custom headers, so it's in the `<meta>` tag where it's ignored (low risk: the app has no embed-friendly surface) |
-| 📜 **Auditable** | GPL-3.0 open source — read every line |
+| 🛡️ **Locked-down security** | The app can only reach the weather and map servers it actually needs |
+| 🕵️ **No hidden sharing** | Nothing beyond the forecast request itself ever leaves your device |
+| 🚫 **Camera & mic stay off** | Access to camera, microphone, motion sensors, and payment is blocked |
+| 🖼️ **Can't be embedded** | The app won't run inside other websites (best-effort — GitHub Pages limits header support, and there's nothing to gain from embedding anyway) |
+| 📜 **Open source** | GPL-3.0 — read every line |
 
 > ⚠️ **Geolocation note:** your coordinates *are* sent to the weather API when you view a forecast or the map. It's the only way to get a local forecast — but it's disclosed, opt-in, and never logged or shared.
 

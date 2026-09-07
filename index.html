@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="description" content="Ambr3Weather - A privacy-first weather app. No tracking, no ads, no cookies. Just weather.">
+  <meta name="description" content="Ambr3Weather - No tracking, no ads, no cookies. Just weather.">
   <meta name="theme-color" content="#4facfe">
   <meta name="color-scheme" content="light dark">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,8 +20,8 @@
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
   <link rel="icon" type="image/svg+xml" href="assets/icons/icon-192.svg">
 
-  <link rel="stylesheet" href="css/style.css?v=0.5.0">
-  <link rel="stylesheet" href="css/responsive.css?v=0.5.0">
+  <link rel="stylesheet" href="css/style.css?v=0.5.1">
+  <link rel="stylesheet" href="css/responsive.css?v=0.5.1">
   <link rel="preconnect" href="https://api.open-meteo.com">
   <link rel="preconnect" href="https://air-quality-api.open-meteo.com">
   <link rel="preconnect" href="https://geocoding-api.open-meteo.com">
@@ -201,7 +201,7 @@
 
   <footer class="footer">
     <p>
-      Ambr3Weather v0.5.0 &mdash; No tracking. No ads. No cookies.
+      Ambr3Weather v0.5.1 &mdash; No tracking. No ads. No cookies.
       <br>
       Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo.com</a> &mdash; <a href="https://open-meteo.com/license" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>.
       Map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>.
@@ -216,11 +216,13 @@
     <button class="install-dismiss" id="installDismiss" aria-label="Dismiss">&times;</button>
   </div>
 
-  <script src="js/config.js?v=0.5.0"></script>
-  <script src="js/utils.js?v=0.5.0"></script>
-  <script src="js/icons.js?v=0.5.0"></script>
-  <script src="js/api.js?v=0.5.0"></script>
-  <script src="js/ui.js?v=0.5.0"></script>
-  <script src="js/app.js?v=0.5.0"></script>
+  <div class="hourly-modal hidden" id="hourlyModal" role="dialog" aria-modal="true" aria-label="Forecast details"></div>
+
+  <script src="js/config.js?v=0.5.1"></script>
+  <script src="js/utils.js?v=0.5.1"></script>
+  <script src="js/icons.js?v=0.5.1"></script>
+  <script src="js/api.js?v=0.5.1"></script>
+  <script src="js/ui.js?v=0.5.1"></script>
+  <script src="js/app.js?v=0.5.1"></script>
 </body>
 </html>
