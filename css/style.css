@@ -1975,7 +1975,7 @@ body.has-modal {
 
 .hourly-modal__stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
   gap: 0.55rem;
   margin-top: 1.2rem;
   text-align: left;
@@ -1996,6 +1996,7 @@ body.has-modal {
   letter-spacing: 0.05em;
   opacity: 0.8;
   margin-bottom: 0.15rem;
+  overflow-wrap: anywhere;
 }
 
 .hourly-modal__stat-value {
