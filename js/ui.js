@@ -270,7 +270,7 @@ const UI = {
     const dewPoint = c.dew_point_2m != null ? Utils.formatTemp(c.dew_point_2m, units) : '—';
 
     const conditions = [
-      { label: 'Precipitation', value: precipNow, sub: precipSub.length ? precipSub.join(' · ') : 'Dry today' },
+      { label: 'Precip', value: precipNow, sub: precipSub.length ? precipSub.join(' · ') : 'Dry today' },
       { label: 'Wind', value: windSpeed != null ? `${windSpeed} ${windUnit}` : '—', sub: `${windArrow}<span class="detail-box__dir">${Utils.getWindDirection(c.wind_direction_10m)}</span> · gusts ${gustSpeed != null ? `${gustSpeed} ${windUnit}` : '—'}` },
       { label: 'Humidity', value: humidity != null ? `${humidity}%` : '—', sub: `Dew point ${dewPoint}` },
       { label: 'UV Index', value: uv != null ? `<span class="uv-badge" style="background:${uvInfo.color}">${Math.round(uv)}</span>` : '—', sub: uv != null ? `${uvInfo.label}${uvClear != null ? ` · clear sky ${Math.round(uvClear)}` : ''}` : 'Not available' },
@@ -922,14 +922,14 @@ const UI = {
         <div class="hourly-modal__temp">${temp}</div>
         <div class="hourly-modal__desc">${desc}</div>
         <div class="hourly-modal__stats">
-          ${stat('Feels like', feels)}
-          ${stat('Rain chance', pop != null ? `${Math.round(pop)}%` : null)}
-          ${stat('Precipitation', Utils.formatPrecip(precip, units))}
+          ${stat('Feels', feels)}
+          ${stat('Rain', pop != null ? `${Math.round(pop)}%` : null)}
+          ${stat('Precip', Utils.formatPrecip(precip, units))}
           ${stat('Snow', Utils.formatSnow(snow, units))}
           ${stat('Humidity', humidity)}
           ${stat('Wind', windVal)}
           ${stat('Pressure', pressure)}
-          ${stat('Cloud cover', cloud)}
+          ${stat('Clouds', cloud)}
           ${stat('Visibility', visibility)}
         </div>
         <div class="hourly-modal__hint">Swipe or use <kbd>&larr;</kbd> <kbd>&rarr;</kbd> to browse hours</div>
@@ -1013,12 +1013,12 @@ const UI = {
         <div class="hourly-modal__temp">${high}<span class="hourly-modal__temp-low"> / ${low}</span></div>
         <div class="hourly-modal__desc">${desc}</div>
         <div class="hourly-modal__stats">
-          ${stat('Feels like', feelsVal)}
-          ${stat('Rain chance', `${Math.round(pop)}%`)}
-          ${stat('Precipitation', Utils.formatPrecip(rainSum, units))}
+          ${stat('Feels', feelsVal)}
+          ${stat('Rain', `${Math.round(pop)}%`)}
+          ${stat('Precip', Utils.formatPrecip(rainSum, units))}
           ${stat('Snow', Utils.formatSnow(snowSum, units))}
           ${stat('Wind', windVal)}
-          ${uv != null ? stat('UV index', uvInfo ? `<span style="color:${uvInfo.color}">${uv} ${uvInfo.label}</span>` : String(uv)) : ''}
+          ${uv != null ? stat('UV', uvInfo ? `<span style="color:${uvInfo.color}">${uv} ${uvInfo.label}</span>` : String(uv)) : ''}
           ${stat('Sunshine', sunshine != null ? Utils.formatDuration(sunshine) : null)}
           ${stat('Sunrise', sunrise)}
           ${stat('Sunset', sunset)}
