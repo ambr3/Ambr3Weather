@@ -891,42 +891,51 @@ const UI = {
       dLabel = Utils.parseLocal(time, this._tz).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
     }
 
-    modal.innerHTML = `
-      <div class="hourly-modal__backdrop"></div>
-      <div class="hourly-modal__card">
-        <button type="button" class="hourly-modal__nav hourly-modal__nav--prev" aria-label="Previous hour">&lsaquo;</button>
-        <div class="hourly-modal__body">
+    const creating = modal.classList.contains('hidden') || !modal.querySelector('.hourly-modal__card');
+    let body = modal.querySelector('.hourly-modal__body');
+    if (creating) {
+      modal.innerHTML = `
+        <div class="hourly-modal__backdrop"></div>
+        <div class="hourly-modal__card">
+          <button type="button" class="hourly-modal__nav hourly-modal__nav--prev" aria-label="Previous hour">&lsaquo;</button>
+          <div class="hourly-modal__body"></div>
           <button type="button" class="hourly-modal__close" aria-label="Close">&times;</button>
-          <div class="hourly-modal__date">${dLabel}</div>
-          <div class="hourly-modal__time">${tLabel}</div>
-          <div class="hourly-modal__icon">${icon}</div>
-          <div class="hourly-modal__temp">${temp}</div>
-          <div class="hourly-modal__desc">${desc}</div>
-          <div class="hourly-modal__stats">
-            ${stat('Feels like', feels)}
-            ${stat('Rain chance', pop != null ? `${Math.round(pop)}%` : null)}
-            ${stat('Precipitation', Utils.formatPrecip(precip, units))}
-            ${stat('Snow', Utils.formatSnow(snow, units))}
-            ${stat('Humidity', humidity)}
-            ${stat('Wind', windVal)}
-            ${stat('Pressure', pressure)}
-            ${stat('Cloud cover', cloud)}
-            ${stat('Visibility', visibility)}
-          </div>
-          <div class="hourly-modal__hint">Swipe or use <kbd>&larr;</kbd> <kbd>&rarr;</kbd> to browse hours</div>
+          <button type="button" class="hourly-modal__nav hourly-modal__nav--next" aria-label="Next hour">&rsaquo;</button>
         </div>
-        <button type="button" class="hourly-modal__nav hourly-modal__nav--next" aria-label="Next hour">&rsaquo;</button>
-      </div>
-    `;
-
-    if (this._modalSlideDir) {
-      const body = modal.querySelector('.hourly-modal__body');
-      if (body) body.style.animation = `${this._modalSlideDir === 1 ? 'hourlyModalInLeft' : 'hourlyModalInRight'} 0.24s ease`;
+      `;
+      modal.classList.remove('hidden');
+      document.body.classList.add('has-modal');
+      body = modal.querySelector('.hourly-modal__body');
+    } else if (this._modalSlideDir && body) {
+      const anim = `${this._modalSlideDir === 1 ? 'hourlyModalInLeft' : 'hourlyModalInRight'} 0.24s ease`;
+      body.style.animation = 'none';
+      void body.offsetWidth;
+      body.style.animation = anim;
       this._modalSlideDir = 0;
     }
 
-    modal.classList.remove('hidden');
-    document.body.classList.add('has-modal');
+    if (body) {
+      body.innerHTML = `
+        <div class="hourly-modal__date">${dLabel}</div>
+        <div class="hourly-modal__time">${tLabel}</div>
+        <div class="hourly-modal__icon">${icon}</div>
+        <div class="hourly-modal__temp">${temp}</div>
+        <div class="hourly-modal__desc">${desc}</div>
+        <div class="hourly-modal__stats">
+          ${stat('Feels like', feels)}
+          ${stat('Rain chance', pop != null ? `${Math.round(pop)}%` : null)}
+          ${stat('Precipitation', Utils.formatPrecip(precip, units))}
+          ${stat('Snow', Utils.formatSnow(snow, units))}
+          ${stat('Humidity', humidity)}
+          ${stat('Wind', windVal)}
+          ${stat('Pressure', pressure)}
+          ${stat('Cloud cover', cloud)}
+          ${stat('Visibility', visibility)}
+        </div>
+        <div class="hourly-modal__hint">Swipe or use <kbd>&larr;</kbd> <kbd>&rarr;</kbd> to browse hours</div>
+      `;
+    }
+
     const focus = modal.querySelector('.hourly-modal__close');
     if (focus) focus.focus();
   },
@@ -973,42 +982,51 @@ const UI = {
       ? `${windMax} ${windUnit}${gustMax != null ? ` · gusts ${gustMax}` : ''}${windDir != null ? ` ${Utils.getWindDirection(windDir)}` : ''}`
       : null;
 
-    modal.innerHTML = `
-      <div class="hourly-modal__backdrop"></div>
-      <div class="hourly-modal__card">
-        <button type="button" class="hourly-modal__nav hourly-modal__nav--prev" aria-label="Previous day">&lsaquo;</button>
-        <div class="hourly-modal__body">
+    const creating = modal.classList.contains('hidden') || !modal.querySelector('.hourly-modal__card');
+    let body = modal.querySelector('.hourly-modal__body');
+    if (creating) {
+      modal.innerHTML = `
+        <div class="hourly-modal__backdrop"></div>
+        <div class="hourly-modal__card">
+          <button type="button" class="hourly-modal__nav hourly-modal__nav--prev" aria-label="Previous day">&lsaquo;</button>
+          <div class="hourly-modal__body"></div>
           <button type="button" class="hourly-modal__close" aria-label="Close">&times;</button>
-          <div class="hourly-modal__date">${weekday}</div>
-          <div class="hourly-modal__time">${dateHeading}</div>
-          <div class="hourly-modal__icon">${icon}</div>
-          <div class="hourly-modal__temp">${high}<span class="hourly-modal__temp-low"> / ${low}</span></div>
-          <div class="hourly-modal__desc">${desc}</div>
-          <div class="hourly-modal__stats">
-            ${stat('Feels like', feelsVal)}
-            ${stat('Rain chance', `${Math.round(pop)}%`)}
-            ${stat('Precipitation', Utils.formatPrecip(rainSum, units))}
-            ${stat('Snow', Utils.formatSnow(snowSum, units))}
-            ${stat('Wind', windVal)}
-            ${uv != null ? stat('UV index', uvInfo ? `<span style="color:${uvInfo.color}">${uv} ${uvInfo.label}</span>` : String(uv)) : ''}
-            ${stat('Sunshine', sunshine != null ? Utils.formatDuration(sunshine) : null)}
-            ${stat('Sunrise', sunrise)}
-            ${stat('Sunset', sunset)}
-          </div>
-          <div class="hourly-modal__hint">Swipe or use <kbd>&larr;</kbd> <kbd>&rarr;</kbd> to browse days</div>
+          <button type="button" class="hourly-modal__nav hourly-modal__nav--next" aria-label="Next day">&rsaquo;</button>
         </div>
-        <button type="button" class="hourly-modal__nav hourly-modal__nav--next" aria-label="Next day">&rsaquo;</button>
-      </div>
-    `;
-
-    if (this._modalSlideDir) {
-      const body = modal.querySelector('.hourly-modal__body');
-      if (body) body.style.animation = `${this._modalSlideDir === 1 ? 'hourlyModalInLeft' : 'hourlyModalInRight'} 0.24s ease`;
+      `;
+      modal.classList.remove('hidden');
+      document.body.classList.add('has-modal');
+      body = modal.querySelector('.hourly-modal__body');
+    } else if (this._modalSlideDir && body) {
+      const anim = `${this._modalSlideDir === 1 ? 'hourlyModalInLeft' : 'hourlyModalInRight'} 0.24s ease`;
+      body.style.animation = 'none';
+      void body.offsetWidth;
+      body.style.animation = anim;
       this._modalSlideDir = 0;
     }
 
-    modal.classList.remove('hidden');
-    document.body.classList.add('has-modal');
+    if (body) {
+      body.innerHTML = `
+        <div class="hourly-modal__date">${weekday}</div>
+        <div class="hourly-modal__time">${dateHeading}</div>
+        <div class="hourly-modal__icon">${icon}</div>
+        <div class="hourly-modal__temp">${high}<span class="hourly-modal__temp-low"> / ${low}</span></div>
+        <div class="hourly-modal__desc">${desc}</div>
+        <div class="hourly-modal__stats">
+          ${stat('Feels like', feelsVal)}
+          ${stat('Rain chance', `${Math.round(pop)}%`)}
+          ${stat('Precipitation', Utils.formatPrecip(rainSum, units))}
+          ${stat('Snow', Utils.formatSnow(snowSum, units))}
+          ${stat('Wind', windVal)}
+          ${uv != null ? stat('UV index', uvInfo ? `<span style="color:${uvInfo.color}">${uv} ${uvInfo.label}</span>` : String(uv)) : ''}
+          ${stat('Sunshine', sunshine != null ? Utils.formatDuration(sunshine) : null)}
+          ${stat('Sunrise', sunrise)}
+          ${stat('Sunset', sunset)}
+        </div>
+        <div class="hourly-modal__hint">Swipe or use <kbd>&larr;</kbd> <kbd>&rarr;</kbd> to browse days</div>
+      `;
+    }
+
     const focus = modal.querySelector('.hourly-modal__close');
     if (focus) focus.focus();
   },
