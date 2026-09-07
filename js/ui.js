@@ -731,22 +731,29 @@ const UI = {
       if (e.target.closest('.hourly-modal__nav--next')) { this._navModal(1); return; }
     });
 
-    let startX = null, startY = null, dx = 0, dy = 0, down = false;
+    let startX = null, startY = null, dx = 0, dy = 0, peakX = 0, peakY = 0, down = false, axis = null;
     modal.addEventListener('pointerdown', (e) => {
       if (!e.target.closest('.hourly-modal__card')) return;
-      down = true; startX = e.clientX; startY = e.clientY; dx = 0; dy = 0;
+      down = true; startX = e.clientX; startY = e.clientY; dx = 0; dy = 0; peakX = 0; peakY = 0; axis = null;
+      try { modal.setPointerCapture(e.pointerId); } catch (err) { /* some browsers/inputs lack capture */ }
     });
     modal.addEventListener('pointermove', (e) => {
       if (!down) return;
       dx = e.clientX - startX; dy = e.clientY - startY;
+      if (Math.abs(dx) > Math.abs(peakX)) peakX = dx;
+      if (Math.abs(dy) > Math.abs(peakY)) peakY = dy;
+      if (axis === null && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+        axis = Math.abs(dx) > Math.abs(dy) * 1.2 ? 'x' : 'y';
+      }
+      if (axis === 'x') e.preventDefault();
     });
     modal.addEventListener('pointerup', () => {
       if (!down) return;
       down = false;
-      const ax = Math.abs(dx), ay = Math.abs(dy);
-      if (ax > 55 && ax > ay * 1.2) this._navModal(dx < 0 ? 1 : -1);
+      if (axis === 'x' && Math.abs(peakX) > 55) this._navModal(peakX < 0 ? 1 : -1);
     });
-    modal.addEventListener('pointercancel', () => { down = false; });
+    modal.addEventListener('pointercancel', () => { down = false; axis = null; });
+    modal.addEventListener('lostpointercapture', () => { down = false; });
 
     this._addModalKeyHandler();
     this._hourlyModalBound = true;
