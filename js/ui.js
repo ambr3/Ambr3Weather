@@ -802,6 +802,7 @@ const UI = {
     this._modalCount = this._hourlyCount;
     this._modalIndex = Math.max(0, Math.min(this._hourlyCount - 1, i));
     this._modalOpen = true;
+    this._modalSlideDir = 0;
     this._addModalKeyHandler();
     this._renderHourlyModal();
   },
@@ -812,6 +813,7 @@ const UI = {
     this._modalCount = this._forecastCount;
     this._modalIndex = Math.max(0, Math.min(this._forecastCount - 1, i));
     this._modalOpen = true;
+    this._modalSlideDir = 0;
     this._addModalKeyHandler();
     this._renderHourlyModal();
   },
@@ -821,6 +823,7 @@ const UI = {
     const n = this._modalIndex + dir;
     if (n < 0 || n >= this._modalCount) return;
     this._modalIndex = n;
+    this._modalSlideDir = dir;
     this._renderHourlyModal();
   },
 
@@ -916,6 +919,12 @@ const UI = {
       </div>
     `;
 
+    if (this._modalSlideDir) {
+      const body = modal.querySelector('.hourly-modal__body');
+      if (body) body.style.animation = `${this._modalSlideDir === 1 ? 'hourlyModalInLeft' : 'hourlyModalInRight'} 0.24s ease`;
+      this._modalSlideDir = 0;
+    }
+
     modal.classList.remove('hidden');
     document.body.classList.add('has-modal');
     const focus = modal.querySelector('.hourly-modal__close');
@@ -991,6 +1000,12 @@ const UI = {
         <button type="button" class="hourly-modal__nav hourly-modal__nav--next" aria-label="Next day">&rsaquo;</button>
       </div>
     `;
+
+    if (this._modalSlideDir) {
+      const body = modal.querySelector('.hourly-modal__body');
+      if (body) body.style.animation = `${this._modalSlideDir === 1 ? 'hourlyModalInLeft' : 'hourlyModalInRight'} 0.24s ease`;
+      this._modalSlideDir = 0;
+    }
 
     modal.classList.remove('hidden');
     document.body.classList.add('has-modal');
