@@ -732,13 +732,14 @@ const UI = {
     });
 
     let startX = null, startY = null, dx = 0, dy = 0, peakX = 0, peakY = 0, down = false, axis = null;
+
     modal.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'touch') return;
       if (!e.target.closest('.hourly-modal__card')) return;
       down = true; startX = e.clientX; startY = e.clientY; dx = 0; dy = 0; peakX = 0; peakY = 0; axis = null;
-      try { modal.setPointerCapture(e.pointerId); } catch (err) { /* some browsers/inputs lack capture */ }
     });
     modal.addEventListener('pointermove', (e) => {
-      if (!down) return;
+      if (!down || e.pointerType === 'touch') return;
       dx = e.clientX - startX; dy = e.clientY - startY;
       if (Math.abs(dx) > Math.abs(peakX)) peakX = dx;
       if (Math.abs(dy) > Math.abs(peakY)) peakY = dy;
@@ -747,13 +748,38 @@ const UI = {
       }
       if (axis === 'x') e.preventDefault();
     });
-    modal.addEventListener('pointerup', () => {
-      if (!down) return;
+    modal.addEventListener('pointerup', (e) => {
+      if (!down || e.pointerType === 'touch') return;
       down = false;
       if (axis === 'x' && Math.abs(peakX) > 55) this._navModal(peakX < 0 ? 1 : -1);
     });
     modal.addEventListener('pointercancel', () => { down = false; axis = null; });
-    modal.addEventListener('lostpointercapture', () => { down = false; });
+
+    modal.addEventListener('touchstart', (e) => {
+      if (!e.target.closest('.hourly-modal__card')) return;
+      const t = e.touches[0];
+      if (!t) return;
+      down = true; startX = t.clientX; startY = t.clientY; dx = 0; dy = 0; peakX = 0; peakY = 0; axis = null;
+    }, { passive: true });
+    modal.addEventListener('touchmove', (e) => {
+      if (!down) return;
+      const t = e.touches[0];
+      if (!t) return;
+      dx = t.clientX - startX; dy = t.clientY - startY;
+      if (Math.abs(dx) > Math.abs(peakX)) peakX = dx;
+      if (Math.abs(dy) > Math.abs(peakY)) peakY = dy;
+      if (axis === null && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+        axis = Math.abs(dx) > Math.abs(dy) * 1.2 ? 'x' : 'y';
+      }
+      if (axis === 'x') e.preventDefault();
+    }, { passive: false });
+    modal.addEventListener('touchend', () => {
+      if (!down) return;
+      down = false;
+      if (axis === 'x' && Math.abs(peakX) > 55) this._navModal(peakX < 0 ? 1 : -1);
+      axis = null;
+    });
+    modal.addEventListener('touchcancel', () => { down = false; axis = null; });
 
     this._addModalKeyHandler();
     this._hourlyModalBound = true;

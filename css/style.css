@@ -1900,7 +1900,9 @@ body.has-modal {
 .hourly-modal__nav {
   flex: 0 0 auto;
   align-self: center;
-  display: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 48px;
   height: 48px;
   border: none;
@@ -2009,13 +2011,12 @@ body.has-modal {
   opacity: 0.8;
 }
 
-@media (min-width: 600px) {
-  .hourly-modal__nav {
-    display: block;
-  }
-}
-
 @media (max-width: 520px) {
+  .hourly-modal__nav {
+    width: 34px;
+    height: 34px;
+    font-size: 1.5rem;
+  }
   .hourly-modal__stats {
     grid-template-columns: repeat(2, 1fr);
   }
