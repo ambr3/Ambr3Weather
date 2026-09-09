@@ -25,6 +25,11 @@
   padding: 0;
 }
 
+html {
+  width: 100%;
+  max-width: 100%;
+}
+
 body {
   font-family: var(--font-body);
   color: var(--color-text);
@@ -969,6 +974,9 @@ body:not(.theme-dark).theme-mist .hourly-card__temp--solid {
   grid-template-columns: repeat(3, 1fr);
   gap: 1.1rem;
   grid-auto-rows: auto;
+  justify-items: stretch;
+  width: 100%;
+  max-width: 100%;
 }
 
 .detail-box {
@@ -982,10 +990,12 @@ body:not(.theme-dark).theme-mist .hourly-card__temp--solid {
   flex-direction: column;
   gap: 0.35rem;
   animation: fadeSlideIn 0.5s ease both;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .detail-box--conditions {
-  grid-column: 1 / -1;
+  grid-column: 1 / span 3;
 }
 
 .conditions-grid {
@@ -1051,7 +1061,7 @@ body:not(.theme-dark).theme-mist .hourly-card__temp--solid {
 }
 
 .detail-box--map {
-  grid-column: 1 / -1;
+  grid-column: 1 / span 3;
 }
 
 .detail-box--map .detail-box__title {
