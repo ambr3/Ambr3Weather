@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/icons/icon-192.svg" alt="Seclusa Weather" width="120" height="120">
+  <img src="assets/icons/icon-maskable-192.svg" alt="Seclusa Weather" width="120" height="120">
 </p>
 
 <h1 align="center">Seclusa Weather</h1>
