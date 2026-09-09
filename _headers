@@ -1,0 +1,11 @@
+# Seclusa Weather — security headers for Netlify (and compatible hosts).
+# Ignored by GitHub Pages. Drop this file at the site root on Netlify/Cloudflare
+# Pages to enforce the same policy as the in-page CSP meta tag plus a real
+# `frame-ancestors 'none'` header (the meta form cannot stop clickjacking).
+
+/*
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests; connect-src https://api.open-meteo.com https://air-quality-api.open-meteo.com https://geocoding-api.open-meteo.com; img-src 'self' https://tile.openstreetmap.org; style-src 'self' 'unsafe-inline'; script-src 'self'
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=(self), gyroscope=(), magnetometer=(), payment=(), usb=()

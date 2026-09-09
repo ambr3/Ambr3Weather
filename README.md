@@ -89,6 +89,10 @@ Open the live site in your browser and install it as a PWA:
 
 > 💡 Want maximum security? On Android use a hardened browser like **Vanadium (GrapheneOS)** or **Brave** for any PWA.
 
+### Self-host
+
+Serve the repo as a static site. To harden responses with real headers (the in-page CSP meta can't block clickjacking on its own), deploy with the bundled samples: `.htaccess` for Apache, `_headers` for Netlify/Cloudflare Pages. GitHub Pages ignores both files.
+
 ---
 
 ## ⚠️ Disclaimer

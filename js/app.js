@@ -141,7 +141,7 @@ const App = {
             this.deferredPrompt = null;
             this.$('installBanner').classList.add('hidden');
           })
-          .catch((e) => { console.debug('Background load failed:', e); });
+.catch((e) => { console.debug('Install prompt failed:', e); });
       }
     });
 

@@ -1194,9 +1194,14 @@ const UI = {
       });
       cells += `<rect x="${padL}" y="${(baseY - 1).toFixed(1)}" width="${iw.toFixed(1)}" height="1" fill="currentColor" fill-opacity="0.15"/>`;
     } else if (cfg.values) {
-      const points = cfg.values.map((t, i) => `${x(i).toFixed(1)},${y(t).toFixed(1)}`).join(' ');
-      const area = `${padL},${(padT + ih).toFixed(1)} ${points} ${x(times.length - 1).toFixed(1)},${(padT + ih).toFixed(1)}`;
-      const gustPoints = cfg.gusts ? cfg.gusts.map((t, i) => `${x(i).toFixed(1)},${y(t).toFixed(1)}`).join(' ') : '';
+      // Sparse series may contain null/NaN entries; drop them so polylines and
+      // area fills never receive invalid coordinates.
+      const path = (arr) => arr
+        .map((t, i) => (Number.isFinite(t) ? `${x(i).toFixed(1)},${y(t).toFixed(1)}` : null))
+        .filter(Boolean).join(' ');
+      const points = path(cfg.values);
+      const area = points ? `${padL},${(padT + ih).toFixed(1)} ${points} ${x(times.length - 1).toFixed(1)},${(padT + ih).toFixed(1)}` : '';
+      const gustPoints = cfg.gusts ? path(cfg.gusts) : '';
       if (cfg.tempGrad) {
         const gradStops = [1, 0.75, 0.5, 0.25, 0].map((f) => {
           const t = minT + span * f;
@@ -1205,9 +1210,10 @@ const UI = {
         defs = `<linearGradient id="tempGrad" x1="0" y1="0" x2="0" y2="1">${gradStops}</linearGradient>`;
         line = `<polygon points="${area}" fill="url(#tempGrad)" fill-opacity="0.22"/>
                 <polyline points="${points}" fill="none" stroke="url(#tempGrad)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>`;
-        dots = cfg.values.map((t, i) =>
-          `<circle cx="${x(i).toFixed(1)}" cy="${y(t).toFixed(1)}" r="4" fill="${Utils.getTempColor(t, units)}" stroke="rgba(255,255,255,0.85)" stroke-width="1.2"/>`
-        ).join('');
+        dots = cfg.values.map((t, i) => {
+          if (!Number.isFinite(t)) return '';
+          return `<circle cx="${x(i).toFixed(1)}" cy="${y(t).toFixed(1)}" r="4" fill="${Utils.getTempColor(t, units)}" stroke="rgba(255,255,255,0.85)" stroke-width="1.2"/>`;
+        }).join('');
       } else {
         line = `<polygon points="${area}" fill="${cfg.color}" fill-opacity="0.15"/>
                 <polyline points="${points}" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1221,11 +1227,12 @@ const UI = {
         }).join('');
       }
       if (cfg.second && cfg.second.length) {
-        const dpPoints = cfg.second.map((t, i) => `${x(i).toFixed(1)},${y(t).toFixed(1)}`).join(' ');
+        const dpPoints = path(cfg.second);
         line += `<polyline points="${dpPoints}" fill="none" stroke="#26C6DA" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6 4"/>`;
-        dots += cfg.second.map((t, i) =>
-          `<circle cx="${x(i).toFixed(1)}" cy="${y(t).toFixed(1)}" r="3" fill="#26C6DA" stroke="rgba(255,255,255,0.85)" stroke-width="1"/>`
-        ).join('');
+        dots += cfg.second.map((t, i) => {
+          if (!Number.isFinite(t)) return '';
+          return `<circle cx="${x(i).toFixed(1)}" cy="${y(t).toFixed(1)}" r="3" fill="#26C6DA" stroke="rgba(255,255,255,0.85)" stroke-width="1"/>`;
+        }).join('');
       }
     }
 
