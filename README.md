@@ -24,11 +24,7 @@
 
 ---
 
-> Whether it's the daily commute, a weekend hike, or just watering the plants — Seclusa Weather gives you a beautiful, honest forecast with none of the privacy baggage.
-
 *Seclusa* — from the Latin meaning "private", "secluded", or "set apart" — keeps your weather your own. Seclusa Weather is a **pure static, open-source weather app**. Everything runs in your browser: preferences and a cached forecast live only on your device, and the only outbound requests are to the [Open-Meteo](https://open-meteo.com/) API and OpenStreetMap tiles. Installable, offline-capable, and auditable end-to-end.
-
-**Seclusa Weather** is named after the Latin-inspired word *seclusa*, meaning "private," "secluded," or "set apart" — reflecting the app's commitment to providing weather information while respecting user privacy.
 
 ---
 
@@ -90,6 +86,8 @@ Open the live site in your browser and install it as a PWA:
 1. Open the site
 2. Tap **Install** / **Add to Home screen**
 3. Done — it works offline too
+
+> 💡 Want maximum security? On Android use a hardened browser like **Vanadium (GrapheneOS)** or **Brave** for any PWA.
 
 ---
 
