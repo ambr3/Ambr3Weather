@@ -52,8 +52,6 @@ const API = {
     return this.fetchJSON(`${CONFIG.WEATHER_BASE}/v1/forecast?${params.join('&')}`);
   },
 
-
-
   async getAirQuality(lat, lon) {
     const params = [
       `latitude=${lat}`,
@@ -63,6 +61,5 @@ const API = {
     ];
     return this.fetchJSON(`${CONFIG.AIR_QUALITY_BASE}/v1/air-quality?${params.join('&')}`);
   },
-
 
 };

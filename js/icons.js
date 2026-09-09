@@ -74,11 +74,11 @@ const WeatherIcons = {
   // offset 2px below gives it a soft edge so it still reads on pale cards —
   // without splitting the body into two visible tones.
   _cloud: (fill = '#FFFFFF') => `
-    <g transform="translate(0,1.5)" opacity="0.55">
-      <ellipse cx="32" cy="40" rx="20" ry="10.5" fill="#9FB3C4"/>
-      <circle cx="17" cy="30" r="10" fill="#9FB3C4"/>
-      <circle cx="31" cy="24.5" r="12" fill="#9FB3C4"/>
-      <circle cx="44" cy="30.5" r="8.5" fill="#9FB3C4"/>
+    <g transform="translate(0,1.5)" opacity="0.65">
+      <ellipse cx="32" cy="40" rx="20" ry="10.5" fill="#8FA6BB"/>
+      <circle cx="17" cy="30" r="10" fill="#8FA6BB"/>
+      <circle cx="31" cy="24.5" r="12" fill="#8FA6BB"/>
+      <circle cx="44" cy="30.5" r="8.5" fill="#8FA6BB"/>
     </g>
     <ellipse cx="32" cy="40" rx="20" ry="10.5" fill="${fill}"/>
     <circle cx="17" cy="30" r="10" fill="${fill}"/>
@@ -158,33 +158,49 @@ const WeatherIcons = {
   // the "partly cloudy" icons and visible on pale backgrounds.
   _cloudOvercast: () => WeatherIcons._svg(`${WeatherIcons._cloud()}`),
 
-  // Heavy rain: three long, slim drops. Each has a soft outer glow underneath
-  // so the streak pops off any card without needing to be thick.
-  _rainLines: () => `
-    <line x1="19" y1="47" x2="13" y2="66" stroke="#4D9CE0" stroke-width="6" opacity="0.35" stroke-linecap="round"/>
-    <line x1="19" y1="47" x2="13" y2="66" stroke="#2E7FD9" stroke-width="3" stroke-linecap="round"/>
-    <line x1="32" y1="47" x2="26" y2="66" stroke="#4D9CE0" stroke-width="6" opacity="0.35" stroke-linecap="round"/>
-    <line x1="32" y1="47" x2="26" y2="66" stroke="#2E7FD9" stroke-width="3" stroke-linecap="round"/>
-    <line x1="45" y1="47" x2="39" y2="66" stroke="#4D9CE0" stroke-width="6" opacity="0.35" stroke-linecap="round"/>
-    <line x1="45" y1="47" x2="39" y2="66" stroke="#2E7FD9" stroke-width="3" stroke-linecap="round"/>
+  // A single raindrop: teardrop path (pointed top, rounded bulb) with a small
+  // gloss highlight, rotated along its fall direction. A pale white rim keeps
+  // the drop readable on any card background.
+  _drop: (x, y, angle = -16, r = 4.6) => `
+    <g transform="translate(${x},${y}) rotate(${angle})">
+      <path d="M0 ${(-r * 1.4).toFixed(1)} C ${(r * 0.9).toFixed(1)} ${(-r * 0.2).toFixed(1)} ${(r * 0.9).toFixed(1)} ${(r * 0.75).toFixed(1)} 0 ${(r * 1.05).toFixed(1)} C ${(-r * 0.9).toFixed(1)} ${(r * 0.75).toFixed(1)} ${(-r * 0.9).toFixed(1)} ${(-r * 0.2).toFixed(1)} 0 ${(-r * 1.4).toFixed(1)} Z" fill="#2E7FD4" stroke="#FFFFFF" stroke-width="0.8"/>
+      <circle cx="${(-r * 0.3).toFixed(1)}" cy="${(r * 0.12).toFixed(1)}" r="${(r * 0.3).toFixed(1)}" fill="#C9E2FF" opacity="0.9"/>
+    </g>
   `,
 
-  // Drizzle: a few large, well-separated blue droplets — sparse and dotted so
-  // on small icons it never reads the same as the solid rain streaks.
-  _drizzleLines: () => `
-    <circle cx="25" cy="52" r="2.8" fill="#5C9BD6"/>
-    <circle cx="24" cy="65" r="2.6" fill="#5C9BD6"/>
-    <circle cx="36" cy="52" r="2.5" fill="#5C9BD6"/>
-    <circle cx="35" cy="64" r="2.3" fill="#5C9BD6"/>
-    <circle cx="47" cy="52" r="2.8" fill="#5C9BD6"/>
-    <circle cx="46" cy="65" r="2.6" fill="#5C9BD6"/>
+  // Heavy rain: a staggered pour of droplets tumbling out from under the cloud.
+  _drops: () => `
+    ${WeatherIcons._drop(22, 58, -16)}
+    ${WeatherIcons._drop(32, 53, -16)}
+    ${WeatherIcons._drop(42, 57, -16)}
   `,
 
+  // Drizzle: fine, light diagonal dashes in two staggered rows. A pale white
+  // underlay lifts the dashes off any background so the mizzle stays legible,
+  // while the thin blue core keeps it reading as gentle rain, never heavy.
+  _drizzleStrokes: () => {
+    const rows = [
+      [19, 52, 15.6, 58.5],
+      [27, 56, 23.6, 62.5],
+      [34, 52, 30.6, 58.5],
+      [41, 56, 37.6, 62.5],
+      [48, 53, 44.6, 59.5],
+    ];
+    const line = rows.map((p) => `<line x1="${p[0]}" y1="${p[1]}" x2="${p[2]}" y2="${p[3]}"/>`).join('');
+    return `
+    <g stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" opacity="0.5">${line}</g>
+    <g stroke="#8FC0F5" stroke-width="5" stroke-linecap="round" opacity="0.3">${line}</g>
+    <g stroke="#2E7FD4" stroke-width="2.4" stroke-linecap="round">${line}</g>
+  `;
+  },
+
+  // Snowflakes peek from under the cloud; a pale blue outline keeps the white
+  // flakes readable on bright cards.
   _snowDots: () => `
-    <circle cx="23" cy="57" r="3" fill="#FFFFFF"/>
-    <circle cx="33" cy="60" r="2.6" fill="#FFFFFF"/>
-    <circle cx="42" cy="56" r="3.1" fill="#FFFFFF"/>
-    <circle cx="51" cy="59.5" r="2.4" fill="#FFFFFF"/>
+    <circle cx="22" cy="55" r="3" fill="#FFFFFF" stroke="#C9DFF2" stroke-width="1"/>
+    <circle cx="33" cy="58" r="2.6" fill="#FFFFFF" stroke="#C9DFF2" stroke-width="1"/>
+    <circle cx="43" cy="54" r="3.1" fill="#FFFFFF" stroke="#C9DFF2" stroke-width="1"/>
+    <circle cx="52" cy="57.5" r="2.4" fill="#FFFFFF" stroke="#C9DFF2" stroke-width="1"/>
   `,
 
   _bolt: () => `
@@ -197,36 +213,36 @@ const WeatherIcons = {
   _precipSvg: (body) => WeatherIcons._svg(body, '0 0 64 72'),
 
   _drizzleDay: () => WeatherIcons._precipSvg(`
+    ${WeatherIcons._drizzleStrokes()}
     ${WeatherIcons._cloud()}
-    ${WeatherIcons._drizzleLines()}
   `),
 
   _drizzleNight: () => WeatherIcons._precipSvg(`
     ${WeatherIcons._moonPeek()}
+    ${WeatherIcons._drizzleStrokes()}
     ${WeatherIcons._cloud()}
-    ${WeatherIcons._drizzleLines()}
   `),
 
   _rainDay: () => WeatherIcons._precipSvg(`
+    ${WeatherIcons._drops()}
     ${WeatherIcons._cloud()}
-    ${WeatherIcons._rainLines()}
   `),
 
   _rainNight: () => WeatherIcons._precipSvg(`
     ${WeatherIcons._moonPeek()}
+    ${WeatherIcons._drops()}
     ${WeatherIcons._cloud()}
-    ${WeatherIcons._rainLines()}
   `),
 
   _snowDay: () => WeatherIcons._precipSvg(`
-    ${WeatherIcons._cloud()}
     ${WeatherIcons._snowDots()}
+    ${WeatherIcons._cloud()}
   `),
 
   _snowNight: () => WeatherIcons._precipSvg(`
     ${WeatherIcons._moonPeek()}
-    ${WeatherIcons._cloud()}
     ${WeatherIcons._snowDots()}
+    ${WeatherIcons._cloud()}
   `),
 
   _thunderDay: () => WeatherIcons._precipSvg(`

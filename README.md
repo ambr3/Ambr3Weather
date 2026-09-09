@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="assets/icons/icon-192.svg" alt="Ambr3Weather" width="120" height="120">
+  <img src="assets/icons/icon-192.svg" alt="Seclusa Weather" width="120" height="120">
 </p>
 
-<h1 align="center">Ambr3Weather</h1>
+<h1 align="center">Seclusa Weather</h1>
 
 <p align="center">
   <em>A privacy-first weather PWA — zero tracking, no accounts, no API keys.</em>
@@ -10,11 +10,9 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="License: GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-blue.svg"></a>
-  <a href="https://github.com/ambr3/Ambr3Weather/releases"><img alt="Release" src="https://img.shields.io/github/v/release/ambr3/Ambr3Weather"></a>
-  <a href="https://github.com/ambr3/Ambr3Weather/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/ambr3/Ambr3Weather"></a>
+  <a href="https://github.com/ambr3/SeclusaWeather/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/ambr3/SeclusaWeather"></a>
   <img alt="Vanilla JS" src="https://img.shields.io/badge/built%20with-vanilla%20JS-f7df1e.svg">
   <img alt="PWA" src="https://img.shields.io/badge/PWA-installable-5a67d8.svg">
-  <img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-4caf50.svg">
 </p>
 
 <p align="center">
@@ -26,9 +24,11 @@
 
 ---
 
-> Whether it's the daily commute, a weekend hike, or just watering the plants — Ambr3Weather gives you a beautiful, honest forecast with none of the privacy baggage.
+> Whether it's the daily commute, a weekend hike, or just watering the plants — Seclusa Weather gives you a beautiful, honest forecast with none of the privacy baggage.
 
-Ambr3Weather is a **pure static, open-source weather app**. Everything runs in your browser: preferences and a cached forecast live only on your device, and the only outbound requests are to the [Open-Meteo](https://open-meteo.com/) API and OpenStreetMap tiles. Installable, offline-capable, and auditable end-to-end.
+*Seclusa* — from the Latin meaning "private", "secluded", or "set apart" — keeps your weather your own. Seclusa Weather is a **pure static, open-source weather app**. Everything runs in your browser: preferences and a cached forecast live only on your device, and the only outbound requests are to the [Open-Meteo](https://open-meteo.com/) API and OpenStreetMap tiles. Installable, offline-capable, and auditable end-to-end.
+
+**Seclusa Weather** is named after the Latin-inspired word *seclusa*, meaning "private," "secluded," or "set apart" — reflecting the app's commitment to providing weather information while respecting user privacy.
 
 ---
 
@@ -85,17 +85,11 @@ Your data is your business. That's the whole point.
 ## 📦 Installation
 
 ### Use it
-Just open the live site in your browser. On Android with **Vanadium (GrapheneOS)** or **Brave**, install it as a PWA:
+Open the live site in your browser and install it as a PWA:
 
 1. Open the site
 2. Tap **Install** / **Add to Home screen**
 3. Done — it works offline too
-
-> 💡 Want maximum security? Use a hardened browser like **Vanadium** or **Brave** for any PWA.
-
-
-
-PRs welcome for anything that keeps it private, fast, or beautiful.
 
 ---
 

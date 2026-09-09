@@ -3,45 +3,82 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="description" content="Ambr3Weather - No tracking, no ads, no cookies. Just weather.">
+  <meta name="description" content="Seclusa Weather - No tracking, no ads, no cookies. Just weather.">
   <meta name="theme-color" content="#4facfe">
   <meta name="color-scheme" content="light dark">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Ambr3Weather">
+  <meta name="apple-mobile-web-app-title" content="Weather">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(self), gyroscope=(), magnetometer=(), payment=(), usb=()">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests; connect-src https://api.open-meteo.com https://air-quality-api.open-meteo.com https://geocoding-api.open-meteo.com; img-src 'self' https://tile.openstreetmap.org; style-src 'self' 'unsafe-inline'; script-src 'self';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests; connect-src https://api.open-meteo.com https://air-quality-api.open-meteo.com https://geocoding-api.open-meteo.com; img-src 'self' https://tile.openstreetmap.org; style-src 'self' 'unsafe-inline'; script-src 'self';">
 
-  <title>Ambr3Weather — Private Weather</title>
+  <title>Seclusa Weather — Private Weather</title>
 
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
   <link rel="icon" type="image/svg+xml" href="assets/icons/icon-192.svg">
 
-  <link rel="stylesheet" href="css/style.css?v=0.5.7">
-  <link rel="stylesheet" href="css/responsive.css?v=0.5.7">
+  <link rel="stylesheet" href="css/style.css?v=0.5.8">
+  <link rel="stylesheet" href="css/responsive.css?v=0.5.8">
   <link rel="preconnect" href="https://api.open-meteo.com">
   <link rel="preconnect" href="https://air-quality-api.open-meteo.com">
   <link rel="preconnect" href="https://geocoding-api.open-meteo.com">
 </head>
 <body class="theme-clear">
 
+  <div id="splash" class="splash" aria-hidden="true">
+    <div class="splash__inner">
+      <div class="splash__logo">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <defs>
+            <linearGradient id="spSun" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#FFE08A"/>
+              <stop offset="100%" style="stop-color:#FFB93C"/>
+            </linearGradient>
+          </defs>
+          <circle cx="32" cy="32" r="16" fill="url(#spSun)"/>
+          <g stroke="#FFFFFF" stroke-width="5" stroke-linecap="round">
+            <line x1="32" y1="12" x2="32" y2="6"/>
+            <line x1="32" y1="52" x2="32" y2="58"/>
+            <line x1="52" y1="32" x2="58" y2="32"/>
+            <line x1="12" y1="32" x2="6" y2="32"/>
+            <line x1="46.1" y1="17.9" x2="50.9" y2="13.1"/>
+            <line x1="17.9" y1="17.9" x2="13.1" y2="13.1"/>
+            <line x1="46.1" y1="46.1" x2="50.9" y2="50.9"/>
+            <line x1="17.9" y1="46.1" x2="13.1" y2="50.9"/>
+          </g>
+        </svg>
+      </div>
+      <h1 class="splash__title">Seclusa<span>Weather</span></h1>
+      <div class="splash__ring" aria-hidden="true"></div>
+    </div>
+    <p class="splash__tag">No tracking. No ads. No cookies.</p>
+  </div>
+
   <header class="header">
     <div class="header__logo">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="4"></circle>
-        <path d="M12 2v2"></path>
-        <path d="M12 20v2"></path>
-        <path d="m4.93 4.93 1.41 1.41"></path>
-        <path d="m17.66 17.66 1.41 1.41"></path>
-        <path d="M2 12h2"></path>
-        <path d="M20 12h2"></path>
-        <path d="m6.34 17.66-1.41 1.41"></path>
-        <path d="m19.07 4.93-1.41 1.41"></path>
+      <svg width="28" height="28" viewBox="0 0 64 64" aria-hidden="true">
+        <defs>
+          <linearGradient id="hdSun" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#FFE08A"/>
+            <stop offset="100%" style="stop-color:#FFB93C"/>
+          </linearGradient>
+        </defs>
+        <circle cx="32" cy="32" r="16" fill="url(#hdSun)"/>
+        <g stroke="#FFFFFF" stroke-width="5" stroke-linecap="round">
+          <line x1="32" y1="12" x2="32" y2="6"/>
+          <line x1="32" y1="52" x2="32" y2="58"/>
+          <line x1="52" y1="32" x2="58" y2="32"/>
+          <line x1="12" y1="32" x2="6" y2="32"/>
+          <line x1="46.1" y1="17.9" x2="50.9" y2="13.1"/>
+          <line x1="17.9" y1="17.9" x2="13.1" y2="13.1"/>
+          <line x1="46.1" y1="46.1" x2="50.9" y2="50.9"/>
+          <line x1="17.9" y1="46.1" x2="13.1" y2="50.9"/>
+        </g>
       </svg>
-      <h1>Ambr3Weather</h1>
+      <h1>Seclusa Weather</h1>
       <span class="header__attribution">Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a> · <a href="https://open-meteo.com/license" target="_blank" rel="noopener noreferrer">CC BY 4.0</a></span>
     </div>
     <div class="header__controls">
@@ -83,7 +120,7 @@
 
   <section class="instructions hidden" id="instructions" aria-label="How to use">
     <button class="instructions__close" id="helpClose" aria-label="Close instructions">&times;</button>
-    <h2 class="instructions__title">How to use Ambr3Weather</h2>
+    <h2 class="instructions__title">How to use Seclusa Weather</h2>
     <ol class="instructions__list">
       <li><strong>Search or locate</strong> — type a city in the search box, or tap the crosshair button to use your current location.</li>
       <li><strong>View the forecast</strong> — the main card shows today's conditions, sun/moon times, and an arc of daylight. Below it are the hourly, 7&nbsp;or&nbsp;14&nbsp;day forecast, and a map of your area.</li>
@@ -201,28 +238,28 @@
 
   <footer class="footer">
     <p>
-      Ambr3Weather v0.5.7 &mdash; No tracking. No ads. No cookies.
+      Seclusa Weather v0.5.8 &mdash; No tracking. No ads. No cookies.
       <br>
       Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo.com</a> &mdash; <a href="https://open-meteo.com/license" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>.
       Map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>.
-      <a href="https://github.com/ambr3/Ambr3Weather" target="_blank" rel="noopener noreferrer">Open source</a> under GPL.
+      <a href="https://github.com/ambr3/SeclusaWeather" target="_blank" rel="noopener noreferrer">Open source</a> under GPL.
     </p>
     <p>Made with ❤️ 🇬🇧</p>
   </footer>
 
   <div class="install-banner hidden" id="installBanner">
-    <span>Install Ambr3Weather on your device</span>
+    <span>Install Weather on your device</span>
     <button class="install-btn" id="installBtn">Install</button>
     <button class="install-dismiss" id="installDismiss" aria-label="Dismiss">&times;</button>
   </div>
 
   <div class="hourly-modal hidden" id="hourlyModal" role="dialog" aria-modal="true" aria-label="Forecast details"></div>
 
-  <script src="js/config.js?v=0.5.7"></script>
-  <script src="js/utils.js?v=0.5.7"></script>
-  <script src="js/icons.js?v=0.5.7"></script>
-  <script src="js/api.js?v=0.5.7"></script>
-  <script src="js/ui.js?v=0.5.7"></script>
-  <script src="js/app.js?v=0.5.7"></script>
+  <script src="js/config.js?v=0.5.8"></script>
+  <script src="js/utils.js?v=0.5.8"></script>
+  <script src="js/icons.js?v=0.5.8"></script>
+  <script src="js/api.js?v=0.5.8"></script>
+  <script src="js/ui.js?v=0.5.8"></script>
+  <script src="js/app.js?v=0.5.8"></script>
 </body>
 </html>

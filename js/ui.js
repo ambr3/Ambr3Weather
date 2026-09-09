@@ -98,8 +98,6 @@ const UI = {
     }
   },
 
-
-
   renderCurrentWeather(data, units) {
     if (!data || !data.current) return;
     const c = data.current;
@@ -194,10 +192,10 @@ const UI = {
     document.body.classList.toggle('theme-dark', isDark);
     document.body.classList.toggle('dynamic-text', isDyn);
     const themeColors = {
-      'theme-clear': '#4facfe', 'theme-clear-night': '#1a1a3e',
-      'theme-clouds': '#607d8b', 'theme-rain': '#4286f4',
-      'theme-snow': '#90caf9', 'theme-thunder': '#5c6bc0',
-      'theme-drizzle': '#78909c', 'theme-mist': '#b0bec5'
+      'theme-clear': '#2e7cf0', 'theme-clear-night': '#14204e',
+      'theme-clouds': '#3f79c6', 'theme-rain': '#465369',
+      'theme-snow': '#b7cbe0', 'theme-thunder': '#101633',
+      'theme-drizzle': '#55677e', 'theme-mist': '#8295aa'
     };
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.content = themeColors[theme] || '#4facfe';
@@ -407,7 +405,7 @@ const UI = {
     }
   },
 
-  renderMap(lat, lon, tempLabel, tempValue, units, temps, windLabel, windDir, weatherCode, isDay) {
+  renderMap(lat, lon, tempLabel, tempValue, units, windLabel, windDir, weatherCode, isDay) {
     const container = this.$('mapContainer');
     const section = this.$('mapSection');
     if (!container || !section) return;
@@ -460,7 +458,7 @@ const UI = {
     }
 
     const windDirDeg = windDir != null ? Math.round(windDir) : null;
-    const windArrowSvg = windDirDeg != null ? this._windArrowSVG(windDirDeg, 'map-badge__arrow', 16, '#fff') : '';
+    const windArrowSvg = windDirDeg != null ? this._windArrowSVG(windDirDeg, 'map-badge__arrow', 32, '#fff') : '';
 
     container.innerHTML = `
       <div class="map-view" style="height:${mapHeight}px">
@@ -601,8 +599,6 @@ const UI = {
 
     this.$('forecastCards').innerHTML = cards;
   },
-
-
 
   renderHourly(hourly, units) {
     if (!hourly || !hourly.time || !hourly.time.length) return;
@@ -1147,6 +1143,21 @@ const UI = {
     const y = (t) => padT + ih - ((t - minT) / span) * ih;
     const x = (i) => padL + (i / times.length) * iw;
 
+    // For the bar ("cells") view the band indents by half a bar width on each
+    // side so the first/last bars sit full-size and never touch the y-axis.
+    let cellsPos = null;
+    if (cfg.cells) {
+      const cw = iw / times.length;
+      const gap = Math.min(7, cw * 0.22);
+      const bw = Math.max(2, cw - gap);
+      cellsPos = {
+        bw,
+        rx: Math.min(8, bw / 2),
+        pos: (i) => padL + bw / 2 + (i / times.length) * (iw - bw),
+      };
+    }
+    const pos = (i) => (cellsPos ? cellsPos.pos(i) : x(i));
+
     let grid = '';
     const ticks = 4;
     for (let i = 0; i <= ticks; i++) {
@@ -1160,30 +1171,26 @@ const UI = {
     const minGap = 76;
     const labelStep = [6, 8, 12, 24].find((s) => (iw * s) / times.length >= minGap) || 24;
     for (let i = 0; i < times.length; i += labelStep) {
-      xlabels += `<text x="${x(i).toFixed(1)}" y="${H - 12}" text-anchor="middle" font-size="18" font-weight="600" fill="currentColor" fill-opacity="0.9">${Utils.formatHourShort(times[i], this._tz)}</text>`;
+      xlabels += `<text x="${pos(i).toFixed(1)}" y="${H - 12}" text-anchor="middle" font-size="18" font-weight="600" fill="currentColor" fill-opacity="0.9">${Utils.formatHourShort(times[i], this._tz)}</text>`;
     }
     if (labelStep < 24) {
       const parts = times[0].slice(0, 10).split('-').map(Number);
       const next = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2] + 1)).toISOString().slice(0, 10) + 'T00:00:00';
       const dayEnd = Utils.parseLocal(next, this._tz);
-      xlabels += `<text x="${x(times.length).toFixed(1)}" y="${H - 12}" text-anchor="end" font-size="18" font-weight="600" fill="currentColor" fill-opacity="0.9">${Utils.formatHourShort(dayEnd, this._tz)}</text>`;
+      xlabels += `<text x="${pos(times.length).toFixed(1)}" y="${H - 12}" text-anchor="end" font-size="18" font-weight="600" fill="currentColor" fill-opacity="0.9">${Utils.formatHourShort(dayEnd, this._tz)}</text>`;
     }
 
     let line = '', dots = '', cells = '', defs = '';
     if (cfg.cells) {
-      const cellW = iw / times.length;
       const bandH = 62;
       const baseY = H - padB;
-      defs = `<filter id="cellGlow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="${Math.max(2, cellW * 0.35).toFixed(1)}"/></filter>`;
       cfg.values.forEach((t, i) => {
         if (!Number.isFinite(t)) return;
         const h = Math.max(3, (t / 100) * bandH);
-        const op = (0.26 + 0.74 * (t / 100)).toFixed(2);
-        const x0 = (x(i) - cellW / 2).toFixed(1);
+        const op = (0.45 + 0.55 * (t / 100)).toFixed(2);
+        const x0 = (cellsPos.pos(i) - cellsPos.bw / 2).toFixed(1);
         const y0 = (baseY - h).toFixed(1);
-        const rx = Math.max(2, cellW / 2).toFixed(1);
-        cells += `<rect x="${x0}" y="${y0}" width="${cellW.toFixed(1)}" height="${h.toFixed(1)}" rx="${rx}" fill="${cfg.color}" filter="url(#cellGlow)" fill-opacity="${(op * 0.7).toFixed(2)}"/>`;
-        cells += `<rect x="${x0}" y="${y0}" width="${cellW.toFixed(1)}" height="${h.toFixed(1)}" rx="${rx}" fill="${cfg.color}" fill-opacity="${op}"/>`;
+        cells += `<rect x="${x0}" y="${y0}" width="${cellsPos.bw.toFixed(1)}" height="${h.toFixed(1)}" rx="${cellsPos.rx}" fill="${cfg.color}" fill-opacity="${op}" stroke="rgba(255,255,255,0.85)" stroke-width="1.5"/>`;
       });
       cells += `<rect x="${padL}" y="${(baseY - 1).toFixed(1)}" width="${iw.toFixed(1)}" height="1" fill="currentColor" fill-opacity="0.15"/>`;
     } else if (cfg.values) {
@@ -1254,6 +1261,10 @@ const UI = {
 
   renderWeather(weatherData, aqData, units, cityName, country, lat, lon, forecastDays) {
     if (!weatherData) return;
+    if (!window.__appRendered) {
+      window.__appRendered = true;
+      if (typeof window.__onFirstRender === 'function') window.__onFirstRender();
+    }
     this.hideLoading();
     this.hideError();
     this._tz = weatherData.timezone ? weatherData.timezone : null;
@@ -1285,7 +1296,7 @@ const UI = {
     if (lat != null && lon != null) {
       const weatherCode = weatherData.current && weatherData.current.weather_code != null ? weatherData.current.weather_code : 0;
       const isDay = weatherData.current && weatherData.current.is_day != null ? weatherData.current.is_day : 1;
-      this.renderMap(lat, lon, tempLabel, tempValue, units, [], UI._mapWindLabel, UI._mapWindDir, weatherCode, isDay);
+      this.renderMap(lat, lon, tempLabel, tempValue, units, UI._mapWindLabel, UI._mapWindDir, weatherCode, isDay);
     } else {
       this.hideMap();
     }

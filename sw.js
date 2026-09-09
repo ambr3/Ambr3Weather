@@ -1,6 +1,6 @@
-const CACHE_NAME = 'ambr3weather-v0.5.7';
-const API_CACHE = 'ambr3weather-api-v1';
-const VERSION = 'v0.5.7';
+const CACHE_NAME = 'seclusaweather-v0.5.8';
+const API_CACHE = 'seclusaweather-api-v1';
+const VERSION = 'v0.5.8';
 const STATIC_ASSETS = [
   './',
   './index.html',

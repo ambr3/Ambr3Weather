@@ -25,6 +25,9 @@ const App = {
     UI.setPressUnit(this.pressUnit);
     UI.initThemeToggle();
 
+    window.__onFirstRender = () => this.dismissSplash();
+    setTimeout(() => this.dismissSplash(), 3200);
+
     this.$('searchForm').addEventListener('submit', (e) => {
       e.preventDefault();
       const city = this.$('searchInput').value.trim();
@@ -138,7 +141,7 @@ const App = {
             this.deferredPrompt = null;
             this.$('installBanner').classList.add('hidden');
           })
-          .catch((e) => { if (window.dev) console.debug('Background load failed:', e); });
+          .catch((e) => { console.debug('Background load failed:', e); });
       }
     });
 
@@ -164,15 +167,15 @@ const App = {
       UI.renderHourlyChart(this._last.weather.hourly, this._last.units);
       if (this._last.lat != null && this._last.lon != null) {
         const c = this._last.weather.current || {};
-        UI.renderMap(this._last.lat, this._last.lon, UI._mapTemp || '', UI._mapTempValue, this._last.units, [], UI._mapWindLabel || '', UI._mapWindDir, c.weather_code || 0, c.is_day);
+        UI.renderMap(this._last.lat, this._last.lon, UI._mapTemp || '', UI._mapTempValue, this._last.units, UI._mapWindLabel || '', UI._mapWindDir, c.weather_code || 0, c.is_day);
       }
     }, 250));
 
     if (Number.isFinite(this.lastLat) && Number.isFinite(this.lastLon)) {
       const name = this.lastCity || CONFIG.DEFAULT_CITY;
-      this.loadWeather(this.lastLat, this.lastLon, name, this.lastCountry || '', name).catch((e) => { if (window.dev) console.debug('Background load failed:', e); });
+      this.loadWeather(this.lastLat, this.lastLon, name, this.lastCountry || '', name).catch((e) => { console.debug('Background load failed:', e); });
     } else if (this.lastCity) {
-      this.searchCity(this.lastCity).catch((e) => { if (window.dev) console.debug('Background load failed:', e); });
+      this.searchCity(this.lastCity).catch((e) => { console.debug('Background load failed:', e); });
     } else {
       const cached = Utils.loadWeatherCache();
       if (cached && cached.weather) {
@@ -188,15 +191,22 @@ const App = {
           UI.markStale(true, `Forecast data is ${ageHrs}h old. Pull to refresh.`);
         }
       } else if (CONFIG.DEFAULT_CITY) {
-        this.searchCity(CONFIG.DEFAULT_CITY).catch((e) => { if (window.dev) console.debug('Default city load failed:', e); });
+        this.searchCity(CONFIG.DEFAULT_CITY).catch((e) => { console.debug('Default city load failed:', e); });
       }
     }
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch((e) => { if (window.dev) console.debug('SW registration failed:', e); });
+      navigator.serviceWorker.register('./sw.js').catch((e) => { console.debug('SW registration failed:', e); });
     }
 
     this.startAutoRefresh();
+  },
+
+  dismissSplash() {
+    const el = this.$('splash');
+    if (!el || el.classList.contains('is-leaving')) return;
+    el.classList.add('is-leaving');
+    setTimeout(() => { el.classList.add('hidden'); }, 520);
   },
 
   startAutoRefresh() {
@@ -306,7 +316,7 @@ const App = {
     const displayName = r.name || 'Location';
     this.$('searchInput').value = displayName;
     this.hideDropdown();
-    this.loadWeather(r.lat, r.lon, displayName, r.country, `${r.name}, ${r.country}`).catch((e) => { if (window.dev) console.debug('Background load failed:', e); });
+    this.loadWeather(r.lat, r.lon, displayName, r.country, `${r.name}, ${r.country}`).catch((e) => { console.debug('Background load failed:', e); });
   },
 
   hideDropdown() {
@@ -383,9 +393,9 @@ const App = {
   reloadCurrent() {
     if (Number.isFinite(this.lastLat) && Number.isFinite(this.lastLon)) {
       const name = this.lastCity || 'Current Location';
-      this.loadWeather(this.lastLat, this.lastLon, name, this.lastCountry || '', name).catch((e) => { if (window.dev) console.debug('Background load failed:', e); });
+      this.loadWeather(this.lastLat, this.lastLon, name, this.lastCountry || '', name).catch((e) => { console.debug('Background load failed:', e); });
     } else if (this.lastCity) {
-      this.searchCity(this.lastCity).catch((e) => { if (window.dev) console.debug('Background load failed:', e); });
+      this.searchCity(this.lastCity).catch((e) => { console.debug('Background load failed:', e); });
     }
   },
 
@@ -598,4 +608,10 @@ const App = {
   },
 };
 
-document.addEventListener('DOMContentLoaded', () => App.init().catch((e) => { if (window.dev) console.debug('Init failed:', e); }));
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    App.init();
+  } catch (e) {
+    console.debug('Init failed:', e);
+  }
+});

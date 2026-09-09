@@ -48,10 +48,6 @@
     gap: 1rem;
   }
 
-  .detail-box__chips {
-    gap: 0.35rem;
-  }
-
   .hourly-card {
     width: 132px;
     padding: 0.85rem 0.45rem;
@@ -199,10 +195,6 @@
     gap: 0.9rem;
   }
 
-  .detail-box--wide {
-    grid-column: span 1;
-  }
-
   .detail-box--conditions {
     grid-column: span 1;
   }
@@ -227,24 +219,8 @@
     font-size: 1.1rem;
   }
 
-  .detail-box__value {
-    font-size: 1.8rem;
-  }
-
-  .detail-box__sub {
-    font-size: 1.15rem;
-  }
-
   .detail-box__chip {
     font-size: 1.05rem;
-  }
-
-  .detail-box__time-label {
-    font-size: 1rem;
-  }
-
-  .detail-box__time-value {
-    font-size: 1.5rem;
   }
 
   .forecast-card {
