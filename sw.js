@@ -1,6 +1,6 @@
-const CACHE_NAME = 'seclusaweather-v0.5.13';
+const CACHE_NAME = 'seclusaweather-v0.5.14';
 const API_CACHE = 'seclusaweather-api-v1';
-const VERSION = 'v0.5.13';
+const VERSION = 'v0.5.14';
 const STATIC_ASSETS = [
   './',
   './index.html',
