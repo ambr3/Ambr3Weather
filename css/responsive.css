@@ -91,32 +91,33 @@
 
 @media (max-width: 480px) {
   .header {
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    justify-content: center;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "logo"
+      "controls"
+      "attr";
+    justify-items: center;
+    gap: 0.55rem 0;
   }
 
   .header__controls {
-    margin-left: auto;
+    justify-self: center;
   }
 
   .header__attribution {
-    display: block;
-    width: 100%;
     font-size: 0.55rem;
     text-align: center;
-    flex-basis: 100%;
-    order: 3;
-    margin-top: -0.2rem;
-  }
-
-  .header__logo svg {
-    width: 24px;
-    height: 24px;
   }
 
   .header__logo {
-    flex-wrap: wrap;
+    justify-content: center;
+    flex-wrap: nowrap;
+    gap: 0.55rem;
+  }
+
+  .header__logo svg {
+    width: 36px;
+    height: 36px;
   }
 
   .header__logo h1 {
