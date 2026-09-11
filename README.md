@@ -5,6 +5,10 @@
 <h1 align="center">Seclusa Weather</h1>
 
 <p align="center">
+  <em>Seclusa — from the Latin meaning "private", "secluded", or "set apart"</em>
+</p>
+
+<p align="center">
   <em>A privacy-first weather PWA — zero tracking, no accounts, no API keys.</em>
 </p>
 
@@ -24,7 +28,7 @@
 
 ---
 
-*Seclusa* — from the Latin meaning "private", "secluded", or "set apart" — keeps your weather your own. Seclusa Weather is a **pure static, open-source weather app**. Everything runs in your browser: preferences and a cached forecast live only on your device, and the only outbound requests are to the [Open-Meteo](https://open-meteo.com/) API and OpenStreetMap tiles. Installable, offline-capable, and auditable end-to-end.
+Keeps your weather your own. Seclusa Weather is a **pure static, open-source weather app**. Everything runs in your browser: preferences and a cached forecast live only on your device, and the only outbound requests are to the [Open-Meteo](https://open-meteo.com/) API and OpenStreetMap tiles. Installable, offline-capable, and auditable end-to-end.
 
 ---
 
@@ -50,7 +54,7 @@
 ### 🎨 Interface
 - **Dark / light themes** with dynamic weather backgrounds at sunrise, rain, snow, thunder, fog, and night
 - **Metric / imperial toggle** — saved between visits
-- **Touch & mouse drag gestures** on the hourly forecast
+- **Touch-friendly 24/48h hourly list** — tap any hour (or any forecast day) for full details
 - Smooth fade-in animations, fully responsive
 
 ---

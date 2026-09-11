@@ -1,5 +1,18 @@
 const Utils = {
+  IntlCache: new Map(),
+
+  _dtf(tz, opts) {
+    const key = `${tz || ''}|${JSON.stringify(opts)}`;
+    let f = this.IntlCache.get(key);
+    if (!f) {
+      f = new Intl.DateTimeFormat('en-US', { timeZone: tz, ...opts });
+      this.IntlCache.set(key, f);
+    }
+    return f;
+  },
+
   formatTemp(value, units) {
+    if (value == null || !Number.isFinite(Number(value))) return '—';
     const rounded = Math.round(value);
     return units === 'imperial' ? `${rounded}°F` : `${rounded}°C`;
   },
@@ -8,11 +21,8 @@ const Utils = {
     const d = isoString instanceof Date ? isoString : new Date(isoString);
     if (tz) {
       try {
-        const dtf = new Intl.DateTimeFormat('en-US', {
-          timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: true,
-        });
         const input = isoString instanceof Date ? d : this.parseLocal(isoString, tz);
-        return dtf.format(input);
+        return this._dtf(tz, { hour: '2-digit', minute: '2-digit', hour12: true }).format(input);
       } catch {
         /* invalid tz — fall through to device-local formatting */
       }
@@ -24,11 +34,8 @@ const Utils = {
     const d = isoString instanceof Date ? isoString : new Date(isoString);
     if (tz) {
       try {
-        const dtf = new Intl.DateTimeFormat('en-US', {
-          timeZone: tz, hour: 'numeric', hour12: true,
-        });
         const input = isoString instanceof Date ? d : this.parseLocal(isoString, tz);
-        return dtf.format(input);
+        return this._dtf(tz, { hour: 'numeric', hour12: true }).format(input);
       } catch {
         /* invalid tz — fall through to device-local formatting */
       }
@@ -46,12 +53,11 @@ const Utils = {
     const asUTC = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds());
     let offsetMs;
     try {
-      const dtf = new Intl.DateTimeFormat('en-US', {
-        timeZone: tz, hour12: false, hourCycle: 'h23', year: 'numeric', month: '2-digit',
-        day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit',
-      });
       const parts = {};
-      for (const part of dtf.formatToParts(new Date(asUTC))) {
+      for (const part of this._dtf(tz, {
+        hour12: false, hourCycle: 'h23', year: 'numeric', month: '2-digit',
+        day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit',
+      }).formatToParts(new Date(asUTC))) {
         if (part.type !== 'literal') parts[part.type] = parseInt(part.value, 10);
       }
       offsetMs = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second) - asUTC;
@@ -199,7 +205,16 @@ const Utils = {
   },
 
   getThemeClass(weatherCode, isDay) {
-    if (isDay === 0 && weatherCode <= 2) return 'theme-clear-night';
+    if (isDay === 0) {
+      if (weatherCode <= 2) return 'theme-clear-night';
+      if (weatherCode <= 3) return 'theme-clouds-night';
+      if (weatherCode >= 45 && weatherCode <= 48) return 'theme-mist-night';
+      if (weatherCode >= 51 && weatherCode <= 57) return 'theme-drizzle-night';
+      if ((weatherCode >= 61 && weatherCode <= 67) || (weatherCode >= 80 && weatherCode <= 82)) return 'theme-rain-night';
+      if ((weatherCode >= 71 && weatherCode <= 77) || (weatherCode >= 85 && weatherCode <= 86)) return 'theme-snow-night';
+      if (weatherCode >= 95) return 'theme-thunder-night';
+      return 'theme-clear-night';
+    }
     if (weatherCode === 0) return 'theme-clear';
     if (weatherCode <= 3) return 'theme-clouds';
     if (weatherCode >= 45 && weatherCode <= 48) return 'theme-mist';

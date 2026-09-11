@@ -1,6 +1,6 @@
-const CACHE_NAME = 'seclusaweather-v0.5.10';
+const CACHE_NAME = 'seclusaweather-v0.5.11';
 const API_CACHE = 'seclusaweather-api-v1';
-const VERSION = 'v0.5.10';
+const VERSION = 'v0.5.11';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -88,12 +88,12 @@ self.addEventListener('fetch', (event) => {
         .then((response) => {
           if (response && response.status === 200) {
             const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone)).catch(() => {});
           }
           return response;
         })
         .catch(() =>
-          caches.match(request).then((cached) => cached || caches.match('./offline.html'))
+          caches.match(request).then((cached) => cached || caches.match('./offline.html')).catch(() => null)
         )
     );
     return;
@@ -104,7 +104,7 @@ self.addEventListener('fetch', (event) => {
       const fetched = fetch(request).then((response) => {
         if (response && response.status === 200 && request.url.startsWith(self.location.origin)) {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone)).catch(() => {});
         }
         return response;
       }).catch(() => cached);

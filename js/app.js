@@ -112,9 +112,6 @@ const App = {
     this.$('chartSolarBtn').addEventListener('click', () => this.setChartMode('solar'));
     UI.setChartMode(this.chartMode);
 
-    this.enableDragScroll('forecastCards');
-    this.enableDragScroll('hourlyScroll');
-
     this.$('locationBtn').addEventListener('click', () => this.useLocation());
     this.$('themeToggle').addEventListener('click', () => {
       UI.toggleTheme();
@@ -135,7 +132,7 @@ const App = {
 
     this.$('installBtn').addEventListener('click', () => {
       if (this.deferredPrompt) {
-        this.deferredPrompt.prompt();
+        this.deferredPrompt.prompt().catch(() => {});
         this.deferredPrompt.userChoice
           .then(() => {
             this.deferredPrompt = null;
@@ -165,9 +162,11 @@ const App = {
     window.addEventListener('resize', Utils.debounce(() => {
       if (!this._last) return;
       UI.renderHourlyChart(this._last.weather.hourly, this._last.units);
+      UI._updateChartHint();
+      UI._updateHourlyScroll();
       if (this._last.lat != null && this._last.lon != null) {
         const c = this._last.weather.current || {};
-        UI.renderMap(this._last.lat, this._last.lon, UI._mapTemp || '', UI._mapTempValue, this._last.units, UI._mapWindLabel || '', UI._mapWindDir, c.weather_code || 0, c.is_day);
+        UI.renderMap(this._last.lat, this._last.lon, UI._mapTemp || '', UI._mapTempValue, this._last.units, UI._mapWindLabel || '', UI._mapWindDir, c.weather_code || 0, c.is_day, UI._mapInfo || {});
       }
     }, 250));
 
@@ -384,6 +383,7 @@ const App = {
         Utils.safeSet('lastLat', cached.lat);
         Utils.safeSet('lastLon', cached.lon);
         UI.renderWeather(cached.weather, cached.aq || null, this.units, cached.name, cached.country, cached.lat, cached.lon, this.forecastDays);
+        this._last = { weather: cached.weather, aq: cached.aq || null, units: this.units, name: cached.name, country: cached.country || '', lat: cached.lat, lon: cached.lon, forecastDays: this.forecastDays };
       } else {
         UI.showError(err && err.message ? err.message : 'Something went wrong.');
       }
@@ -521,61 +521,6 @@ const App = {
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
     );
-  },
-
-  enableDragScroll(id) {
-    const el = this.$(id);
-    if (!el) return;
-    if (el._dragEnabled) return;
-    el._dragEnabled = true;
-
-    let touchSeen = false;
-    el.addEventListener('touchstart', () => { touchSeen = true; }, { once: true, passive: true });
-
-    let active = false;
-    let lastX = 0;
-    let moved = 0;
-
-    const onMove = (e) => {
-      if (!active) return;
-      e.preventDefault();
-      const dx = e.clientX - lastX;
-      moved += Math.abs(dx);
-      lastX = e.clientX;
-      el.scrollLeft -= dx;
-    };
-
-    const onUp = () => {
-      if (!active) return;
-      active = false;
-      el.style.cursor = '';
-      el.style.userSelect = '';
-      el.style.scrollSnapType = '';
-      el.style.webkitScrollSnapType = '';
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    };
-
-    const swallowClick = (e) => {
-      if (moved > 8) { e.stopPropagation(); e.preventDefault(); }
-      moved = 0;
-    };
-    el.addEventListener('click', swallowClick, true);
-
-    el.addEventListener('mousedown', (e) => {
-      if (touchSeen || e.button !== 0) return;
-      if (el.scrollWidth <= el.clientWidth) return;
-      active = true;
-      moved = 0;
-      lastX = e.clientX;
-      el.style.cursor = 'grabbing';
-      el.style.userSelect = 'none';
-      el.style.scrollSnapType = 'none';
-      el.style.webkitScrollSnapType = 'none';
-      window.addEventListener('mousemove', onMove);
-      window.addEventListener('mouseup', onUp);
-      e.preventDefault();
-    });
   },
 
   $(id) {

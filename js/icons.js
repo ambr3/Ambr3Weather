@@ -1,7 +1,10 @@
 const WeatherIcons = {
+  _cache: {},
+
   get(code, isDay = true) {
     const n = isDay ? 'day' : 'night';
     const key = `${n}_${this._group(code)}`;
+    if (key in this._cache) return this._cache[key];
     const icons = {
       day_clear: this._sun,
       night_clear: this._moon,
@@ -22,7 +25,8 @@ const WeatherIcons = {
       day_thunder: this._thunderDay,
       night_thunder: this._thunderNight,
     };
-    return (icons[key] || icons.day_clear)();
+    this._cache[key] = (icons[key] || icons.day_clear)();
+    return this._cache[key];
   },
 
   _group(code) {
@@ -175,24 +179,12 @@ const WeatherIcons = {
     ${WeatherIcons._drop(42, 57, -16)}
   `,
 
-  // Drizzle: fine, light diagonal dashes in two staggered rows. A pale white
-  // underlay lifts the dashes off any background so the mizzle stays legible,
-  // while the thin blue core keeps it reading as gentle rain, never heavy.
-  _drizzleStrokes: () => {
-    const rows = [
-      [19, 52, 15.6, 58.5],
-      [27, 56, 23.6, 62.5],
-      [34, 52, 30.6, 58.5],
-      [41, 56, 37.6, 62.5],
-      [48, 53, 44.6, 59.5],
-    ];
-    const line = rows.map((p) => `<line x1="${p[0]}" y1="${p[1]}" x2="${p[2]}" y2="${p[3]}"/>`).join('');
-    return `
-    <g stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" opacity="0.5">${line}</g>
-    <g stroke="#8FC0F5" stroke-width="5" stroke-linecap="round" opacity="0.3">${line}</g>
-    <g stroke="#2E7FD4" stroke-width="2.4" stroke-linecap="round">${line}</g>
-  `;
-  },
+  // Drizzle: a couple of fine teardrops in a staggered pair, angled like the
+  // rain drops so all rain-icons share the same drop language.
+  _drizzleDrops: () => `
+    ${WeatherIcons._drop(27, 54, -16, 3.4)}
+    ${WeatherIcons._drop(39, 57, -16, 3.4)}
+  `,
 
   // Snowflakes peek from under the cloud; a pale blue outline keeps the white
   // flakes readable on bright cards.
@@ -213,13 +205,13 @@ const WeatherIcons = {
   _precipSvg: (body) => WeatherIcons._svg(body, '0 0 64 72'),
 
   _drizzleDay: () => WeatherIcons._precipSvg(`
-    ${WeatherIcons._drizzleStrokes()}
+    ${WeatherIcons._drizzleDrops()}
     ${WeatherIcons._cloud()}
   `),
 
   _drizzleNight: () => WeatherIcons._precipSvg(`
     ${WeatherIcons._moonPeek()}
-    ${WeatherIcons._drizzleStrokes()}
+    ${WeatherIcons._drizzleDrops()}
     ${WeatherIcons._cloud()}
   `),
 
@@ -247,12 +239,14 @@ const WeatherIcons = {
 
   _thunderDay: () => WeatherIcons._precipSvg(`
     ${WeatherIcons._cloud()}
+    ${WeatherIcons._drops()}
     ${WeatherIcons._bolt()}
   `),
 
   _thunderNight: () => WeatherIcons._precipSvg(`
     ${WeatherIcons._moonPeek()}
     ${WeatherIcons._cloud()}
+    ${WeatherIcons._drops()}
     ${WeatherIcons._bolt()}
   `),
 
