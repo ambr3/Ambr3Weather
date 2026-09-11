@@ -524,6 +524,7 @@ const UI = {
     this._forecastUnits = units;
     this._forecastHourly = hourly;
     const MAX_VISIBLE = 5;
+    const isLong = end === 14 && daily.time.slice(0, end).length > MAX_VISIBLE;
     const cards = daily.time.slice(0, end).map((date, i) => {
       const max = daily.temperature_2m_max && daily.temperature_2m_max[i] != null ? Math.round(daily.temperature_2m_max[i]) : '—';
       const min = daily.temperature_2m_min && daily.temperature_2m_min[i] != null ? Math.round(daily.temperature_2m_min[i]) : '—';
@@ -556,7 +557,6 @@ const UI = {
         </div>
       `;
     }).join('');
-    const isLong = daily.time.slice(0, end).length > MAX_VISIBLE;
     this.$('forecastCards').innerHTML = `
       <div class="forecast-card forecast-card--list${isLong ? ' forecast-card--scroll' : ''}">
         <div class="forecast-card__rows">${cards}</div>

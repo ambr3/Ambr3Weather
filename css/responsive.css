@@ -59,8 +59,8 @@
   }
 
   .hourly-tile__icon {
-    width: 42px;
-    height: 42px;
+    width: 56px;
+    height: 56px;
   }
 
   .hourly-tile__day {
@@ -121,6 +121,16 @@
 
   .header__logo h1 {
     font-size: 1.1rem;
+  }
+
+  .map-badge {
+    max-width: min(200px, 74vw);
+  }
+
+  .map-compass {
+    top: auto;
+    bottom: 50px;
+    right: 8px;
   }
 
   .current-weather {
@@ -202,8 +212,8 @@
   }
 
   .hourly-tile__icon {
-    width: 38px;
-    height: 38px;
+    width: 50px;
+    height: 50px;
   }
 
   .hourly-tile__day {
