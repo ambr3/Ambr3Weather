@@ -486,17 +486,21 @@ const App = {
         const ageHrs = Math.floor(ageMs / (60 * 60 * 1000));
         if (ageHrs >= 6) UI.markStale(true, `Forecast data is ${ageHrs}h old.`);
 
-        UI.renderWeather(weather, aq, this.units, name, country, cached.lat, cached.lon, this.forecastDays);
-        this._last = { weather, aq, units: this.units, name, country, lat: cached.lat, lon: cached.lon, forecastDays: this.forecastDays };
-        if (Number.isFinite(cached.lat) && Number.isFinite(cached.lon)) {
-          this.lastCity = name;
-          this.lastCountry = country;
-          this.lastLat = cached.lat;
-          this.lastLon = cached.lon;
-          Utils.safeSet('lastCity', name);
-          Utils.safeSet('lastCountry', country);
-          Utils.safeSet('lastLat', cached.lat);
-          Utils.safeSet('lastLon', cached.lon);
+        try {
+          UI.renderWeather(weather, aq, this.units, name, country, cached.lat, cached.lon, this.forecastDays);
+          this._last = { weather, aq, units: this.units, name, country, lat: cached.lat, lon: cached.lon, forecastDays: this.forecastDays };
+          if (Number.isFinite(cached.lat) && Number.isFinite(cached.lon)) {
+            this.lastCity = name;
+            this.lastCountry = country;
+            this.lastLat = cached.lat;
+            this.lastLon = cached.lon;
+            Utils.safeSet('lastCity', name);
+            Utils.safeSet('lastCountry', country);
+            Utils.safeSet('lastLat', cached.lat);
+            Utils.safeSet('lastLon', cached.lon);
+          }
+        } catch (renderErr) {
+          UI.showError('Something went wrong.');
         }
         return;
       } else {
@@ -507,17 +511,21 @@ const App = {
 
     if (seq !== this._weatherSeq) return;
 
-    UI.renderWeather(weather, aq, this.units, name, country, lat, lon, this.forecastDays);
-    this._last = { weather, aq, units: this.units, name, country, lat, lon, forecastDays: this.forecastDays };
-    this.lastCity = cityKey;
-    this.lastCountry = country;
-    this.lastLat = lat;
-    this.lastLon = lon;
-    Utils.safeSet('lastCity', cityKey);
-    Utils.safeSet('lastCountry', country);
-    Utils.safeSet('lastLat', lat);
-    Utils.safeSet('lastLon', lon);
-    Utils.saveWeatherCache({ savedAt: Date.now(), units: this.units, name, country, lat, lon, weather, aq });
+    try {
+      UI.renderWeather(weather, aq, this.units, name, country, lat, lon, this.forecastDays);
+      this._last = { weather, aq, units: this.units, name, country, lat, lon, forecastDays: this.forecastDays };
+      this.lastCity = cityKey;
+      this.lastCountry = country;
+      this.lastLat = lat;
+      this.lastLon = lon;
+      Utils.safeSet('lastCity', cityKey);
+      Utils.safeSet('lastCountry', country);
+      Utils.safeSet('lastLat', lat);
+      Utils.safeSet('lastLon', lon);
+      Utils.saveWeatherCache({ savedAt: Date.now(), units: this.units, name, country, lat, lon, weather, aq });
+    } catch (renderErr) {
+      UI.showError('Something went wrong.');
+    }
   },
 
   async useLocation() {

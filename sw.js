@@ -1,7 +1,7 @@
-const CACHE_NAME = 'seclusaweather-v0.5.18';
+const CACHE_NAME = 'seclusaweather-v0.5.19';
 const API_CACHE = 'seclusaweather-api-v1';
-const VERSION = 'v0.5.18';
-const ASSET_VER = '0.5.18';
+const VERSION = 'v0.5.19';
+const ASSET_VER = '0.5.19';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -50,20 +50,41 @@ self.addEventListener('activate', (event) => {
 
 const API_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 const PRUNE_INTERVAL = 6 * 60 * 60 * 1000;
+// CORS-filtered responses never expose the `Date` header, so the API cache
+// records its own write-time timestamp in a sibling meta entry instead of
+// trying to read unreadable response headers.
+const API_META_SUFFIX = '&meta=savedAt';
 
 async function pruneApiCache() {
   try {
     const cache = await caches.open(API_CACHE);
     const requests = await cache.keys();
     const now = Date.now();
-    await Promise.all(requests.map(async (req) => {
+    const metas = new Set();
+    const staleParents = new Set();
+
+    for (const req of requests) {
+      if (!req.url.endsWith(API_META_SUFFIX)) continue;
+      metas.add(req.url);
       const resp = await cache.match(req);
-      if (!resp) return;
-      const cacheDate = resp.headers.get('date') || resp.headers.get('last-modified');
-      if (!cacheDate) return;
-      const t = Date.parse(cacheDate);
-      if (!isNaN(t) && now - t > API_MAX_AGE) await cache.delete(req);
-    }));
+      if (!resp) continue;
+      const t = Number(await resp.text());
+      if (!Number.isFinite(t)) continue;
+      if (now - t > API_MAX_AGE) staleParents.add(req.url.slice(0, -API_META_SUFFIX.length));
+    }
+
+    const doomed = [];
+    for (const req of requests) {
+      if (req.url.endsWith(API_META_SUFFIX)) {
+        const parent = req.url.slice(0, -API_META_SUFFIX.length);
+        if (staleParents.has(parent)) doomed.push(req);
+      } else if (!metas.has(req.url + API_META_SUFFIX) || staleParents.has(req.url)) {
+        // Legacy entry from before meta timestamps, or an expired parent.
+        doomed.push(req);
+      }
+    }
+
+    if (doomed.length) await Promise.all(doomed.map((req) => cache.delete(req)));
   } catch (e) {
     /* pruning is best-effort */
   }
@@ -71,6 +92,7 @@ async function pruneApiCache() {
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
+  if (request.method !== 'GET') return;
   const url = request.url;
 
   if (url.includes('api.open-meteo.com') || url.includes('air-quality-api.open-meteo.com') || url.includes('geocoding-api.open-meteo.com')) {
@@ -80,6 +102,7 @@ self.addEventListener('fetch', (event) => {
           .then((response) => {
             if (response && response.ok) {
               cache.put(request, response.clone())
+                .then(() => cache.put(`${url}${API_META_SUFFIX}`, new Response(String(Date.now()))))
                 .then(() => pruneApiCache())
                 .catch(() => {});
             }

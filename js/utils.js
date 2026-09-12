@@ -43,8 +43,7 @@ const Utils = {
     return d.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
   },
 
-  // Interpret a wall-clock ISO string (as returned by Open-Meteo with
-  // timezone=auto, i.e. no offset) as being local to the given IANA timezone.
+  // Wall-clock ISO string → epoch, in the given IANA timezone.
   // Falls back to the device-local parse when tz is missing.
   parseLocal(iso, tz) {
     const d = new Date(iso);
@@ -53,18 +52,26 @@ const Utils = {
     const asUTC = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds());
     let offsetMs;
     try {
-      const parts = {};
-      for (const part of this._dtf(tz, {
-        hour12: false, hourCycle: 'h23', year: 'numeric', month: '2-digit',
-        day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit',
-      }).formatToParts(new Date(asUTC))) {
-        if (part.type !== 'literal') parts[part.type] = parseInt(part.value, 10);
-      }
-      offsetMs = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second) - asUTC;
+      offsetMs = this.tzOffsetMs(tz, asUTC);
     } catch {
       return d;
     }
     return new Date(asUTC - offsetMs);
+  },
+
+  // tz offset in ms at a given epoch (UTC fields of the tz-local wall-clock
+  // minus the epoch itself). Falls back to 0 on invalid input.
+  tzOffsetMs(tz, epoch) {
+    if (!tz) return 0;
+    const parts = {};
+    for (const part of this._dtf(tz, {
+      hour12: false, hourCycle: 'h23', year: 'numeric', month: '2-digit',
+      day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit',
+    }).formatToParts(new Date(epoch))) {
+      if (part.type !== 'literal') parts[part.type] = parseInt(part.value, 10);
+    }
+    const wall = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
+    return Number.isFinite(wall) ? wall - epoch : 0;
   },
 
   getWindDirection(deg) {

@@ -205,16 +205,16 @@ const WeatherIcons = {
 
   // Heavy rain: a staggered pour of droplets tumbling out from under the cloud.
   _drops: () => `
-    ${WeatherIcons._drop(22, 58, -16)}
-    ${WeatherIcons._drop(32, 53, -16)}
-    ${WeatherIcons._drop(42, 57, -16)}
+    ${WeatherIcons._drop(22, 52, -16)}
+    ${WeatherIcons._drop(32, 47, -16)}
+    ${WeatherIcons._drop(42, 51, -16)}
   `,
 
   // Drizzle: a couple of fine teardrops in a staggered pair, angled like the
   // rain drops so all rain-icons share the same drop language.
   _drizzleDrops: () => `
-    ${WeatherIcons._drop(27, 54, -16, 3.4)}
-    ${WeatherIcons._drop(39, 57, -16, 3.4)}
+    ${WeatherIcons._drop(27, 48, -16, 3.4)}
+    ${WeatherIcons._drop(39, 51, -16, 3.4)}
   `,
 
   // Snowflakes peek from under the cloud; a pale blue outline keeps the white

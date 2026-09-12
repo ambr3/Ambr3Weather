@@ -43,7 +43,13 @@ const UI = {
     const r = Utils.parseLocal(rise, tz).getTime();
     let s = Utils.parseLocal(set, tz).getTime();
     if (isNaN(r) || isNaN(s)) return null;
-    if (s <= r) s += 24 * 60 * 60 * 1000;
+    if (s <= r) {
+      // Set falls on the next local day — advance by one local day so DST
+      // transitions don't skew the arc (offset delta between the two days).
+      const offNow = Utils.tzOffsetMs(tz, s);
+      const offNext = Utils.tzOffsetMs(tz, s + 24 * 60 * 60 * 1000);
+      s += 24 * 60 * 60 * 1000 + (offNow - offNext);
+    }
     const duration = s - r;
     if (duration > 26 * 60 * 60 * 1000 || duration < 0) return null;
     const t = (Date.now() - r) / (s - r);
