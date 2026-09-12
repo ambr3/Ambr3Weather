@@ -385,7 +385,7 @@ const UI = {
 
     const mapBox = `
       <div class="detail-box detail-box--compass" id="compassSection">
-        <div class="detail-box__title">Location</div>
+        <div class="detail-box__title">Wind direction</div>
         <div class="compass-container" id="compassContainer"></div>
       </div>
     `;
