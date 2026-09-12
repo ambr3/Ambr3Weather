@@ -273,12 +273,12 @@ const UI = {
     const dewPoint = c.dew_point_2m != null ? Utils.formatTemp(c.dew_point_2m, units) : '—';
 
     const conditions = [
-      { label: 'Precip', value: precipNow, sub: precipSub.length ? precipSub.join(' · ') : 'Dry today' },
-      { label: 'Wind', value: windSpeed != null ? `${windSpeed} ${windUnit}` : '—', sub: `${windArrow}<span class="detail-box__dir">${Utils.getWindDirection(c.wind_direction_10m)}</span> · gusts ${gustSpeed != null ? `${gustSpeed} ${windUnit}` : '—'}` },
-      { label: 'Humidity', value: humidity != null ? `${humidity}%` : '—', sub: `Dew point ${dewPoint}` },
-      { label: 'UV Index', value: uv != null ? `<span class="uv-badge" style="background:${uvInfo.color}">${Math.round(uv)}</span>` : '—', sub: uv != null ? `${uvInfo.label}${uvClear != null ? ` · clear sky ${Math.round(uvClear)}` : ''}` : 'Not available' },
-      { label: 'Visibility', value: Utils.formatVisibility(c.visibility, UI.visUnit), sub: 'Current visibility' },
-      { label: 'Pressure', value: pressureMsl != null ? Utils.formatPressure(pressureMsl, UI.pressUnit) : pressure != null ? Utils.formatPressure(pressure, UI.pressUnit) : '—', sub: pressureMsl != null && pressure != null ? `MSL ${Utils.formatPressure(pressureMsl, UI.pressUnit)} · Surface ${Utils.formatPressure(pressure, UI.pressUnit)}` : 'Atmospheric pressure · tap to toggle', id: 'pressureBox' },
+      { label: 'Precip', icon: this._metricIcon('precip'), value: precipNow, sub: precipSub.length ? precipSub.join(' · ') : 'Dry today' },
+      { label: 'Wind', icon: this._metricIcon('wind'), value: windSpeed != null ? `${windSpeed} ${windUnit}` : '—', sub: `${windArrow}<span class="detail-box__dir">${Utils.getWindDirection(c.wind_direction_10m)}</span> · gusts ${gustSpeed != null ? `${gustSpeed} ${windUnit}` : '—'}` },
+      { label: 'Humidity', icon: this._metricIcon('humidity'), value: humidity != null ? `${humidity}%` : '—', sub: `Dew point ${dewPoint}` },
+      { label: 'UV Index', icon: this._metricIcon('uv'), value: uv != null ? `<span class="uv-badge" style="background:${uvInfo.color}">${Math.round(uv)}</span>` : '—', sub: uv != null ? `${uvInfo.label}${uvClear != null ? ` · clear sky ${Math.round(uvClear)}` : ''}` : 'Not available' },
+      { label: 'Visibility', icon: this._metricIcon('visibility'), value: Utils.formatVisibility(c.visibility, UI.visUnit), sub: 'Current visibility' },
+      { label: 'Pressure', icon: this._metricIcon('pressure'), value: pressureMsl != null ? Utils.formatPressure(pressureMsl, UI.pressUnit) : pressure != null ? Utils.formatPressure(pressure, UI.pressUnit) : '—', sub: pressureMsl != null && pressure != null ? `MSL ${Utils.formatPressure(pressureMsl, UI.pressUnit)} · Surface ${Utils.formatPressure(pressure, UI.pressUnit)}` : 'Atmospheric pressure · tap to toggle', id: 'pressureBox' },
     ];
 
     const cape = c.cape != null ? Math.round(c.cape) : null;
@@ -289,14 +289,13 @@ const UI = {
       else if (cape < 2000) capeInfo = { label: 'Moderate', color: '#ff9800', desc: 'Thunderstorms possible' };
       else if (cape < 3000) capeInfo = { label: 'High', color: '#f44336', desc: 'Strong storms likely' };
       else capeInfo = { label: 'Extreme', color: '#880e4f', desc: 'Severe storms expected' };
-      conditions.push({ label: 'Thunderstorm risk', value: `<span style="color:${capeInfo.color}">${capeInfo.label}</span>`, sub: capeInfo.desc });
+      conditions.push({ label: 'Thunderstorm risk', icon: this._metricIcon('bolt'), wide: true, value: `<span style="color:${capeInfo.color}">${capeInfo.label}</span>`, sub: capeInfo.desc });
     }
 
     const aqC = aq && aq.current;
     let aqiBlock = `
-      <div class="conditions-item conditions-item--wide">
-        <span class="conditions-item__label">Air Quality</span>
-        <span class="conditions-item__value">—</span>
+      <div class="conditions-item conditions-item--wide conditions-item--empty">
+        <span class="conditions-item__label"><span class="conditions-item__icon">${this._metricIcon('aqi')}</span>Air Quality</span>
         <span class="conditions-item__sub">Not available</span>
       </div>
     `;
@@ -313,7 +312,7 @@ const UI = {
       ).join('');
       aqiBlock = `
         <div class="conditions-item conditions-item--wide">
-          <span class="conditions-item__label">Air Quality · ${isEU ? 'European' : 'US'} AQI</span>
+          <span class="conditions-item__label"><span class="conditions-item__icon">${this._metricIcon('aqi')}</span>Air Quality · ${isEU ? 'European' : 'US'} AQI</span>
           <span class="conditions-item__value">${aqLevel ? `<span class="uv-badge" style="background:${aqLevel.color}">${aqi}</span> <span style="color:${aqLevel.color}">${aqLevel.label}</span>` : '<span class="uv-badge">—</span>'}</span>
           <div class="conditions-item__chips">${chips}</div>
         </div>
@@ -326,17 +325,16 @@ const UI = {
     ] : [];
     const pollenPresent = pollenTypes.filter(([, v]) => v != null);
     let pollenBlock = `
-      <div class="conditions-item conditions-item--wide">
-        <span class="conditions-item__label">Pollen</span>
-        <span class="conditions-item__value">—</span>
+      <div class="conditions-item conditions-item--wide conditions-item--empty">
+        <span class="conditions-item__label"><span class="conditions-item__icon">${this._metricIcon('pollen')}</span>Pollen</span>
         <span class="conditions-item__sub">Not available</span>
       </div>
     `;
     if (pollenPresent.length && !pollenPresent.some(([, v]) => v > 0)) {
       pollenBlock = `
       <div class="conditions-item conditions-item--wide">
-        <span class="conditions-item__label">Pollen</span>
-        <span class="conditions-item__value">Low</span>
+        <span class="conditions-item__label"><span class="conditions-item__icon">${this._metricIcon('pollen')}</span>Pollen</span>
+        <span class="conditions-item__value"><span style="color:#5fb84d">Low</span></span>
         <span class="conditions-item__sub">Little to no pollen</span>
       </div>
     `;
@@ -357,7 +355,7 @@ const UI = {
       }).join('');
       pollenBlock = `
         <div class="conditions-item conditions-item--wide">
-          <span class="conditions-item__label">Pollen</span>
+          <span class="conditions-item__label"><span class="conditions-item__icon">${this._metricIcon('pollen')}</span>Pollen</span>
           <span class="conditions-item__value"><span style="color:${pLevel.color}">${pLevel.label}</span></span>
           <span class="conditions-item__sub">${top[0][0]} is highest · grains/m³</span>
           <div class="pollen-bars">${bars}</div>
@@ -367,10 +365,10 @@ const UI = {
     }
 
     const conditionsGrid = conditions.map((s) => `
-      <div class="conditions-item${s.id ? ` conditions-item--press` : ''}"${s.id ? ` id="${s.id}"` : ''}>
-        <span class="conditions-item__label">${s.label}</span>
+      <div class="conditions-item${s.id ? ` conditions-item--press` : ''}${s.wide ? ` conditions-item--wide` : ''}"${s.id ? ` id="${s.id}"` : ''}>
+        <span class="conditions-item__label">${s.icon ? `<span class="conditions-item__icon">${s.icon}</span>` : ''}${s.label}</span>
         <span class="conditions-item__value">${s.value}</span>
-        <span class="conditions-item__sub">${s.sub || ''}</span>
+        <span class="conditions-item__sub">${s.sub || ''}${s.id ? `<span class="conditions-item__swap" title="Tap to toggle pressure units">${this._metricIcon('swap')}</span>` : ''}</span>
       </div>
     `).join('');
 
@@ -386,9 +384,9 @@ const UI = {
     `);
 
     const mapBox = `
-      <div class="detail-box detail-box--map" id="mapSection">
+      <div class="detail-box detail-box--compass" id="compassSection">
         <div class="detail-box__title">Location</div>
-        <div class="map-container" id="mapContainer"></div>
+        <div class="compass-container" id="compassContainer"></div>
       </div>
     `;
 
@@ -410,94 +408,78 @@ const UI = {
     }
   },
 
-  renderMap(lat, lon, tempLabel, tempValue, units, windLabel, windDir, weatherCode, isDay, info = null) {
-    const container = this.$('mapContainer');
-    const section = this.$('mapSection');
+  renderWindCompass(lat, lon, windLabel, windDir) {
+    const container = this.$('compassContainer');
+    const section = this.$('compassSection');
     if (!container || !section) return;
-
-    lat = Math.max(-85, Math.min(85, lat));
-
-    const tempColor = tempValue != null ? Utils.getTempColor(tempValue, units) : '';
-
-    const tileSize = 256;
-    const maxWidth = container.clientWidth || 600;
-
-    const zoom = 12;
-    const n = Math.pow(2, zoom);
-
-    const latRad = (lat * Math.PI) / 180;
-    const xt = ((lon + 180) / 360) * n;
-    const yt = ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * n;
-
-    const centerTx = Math.floor(xt);
-    const centerTy = Math.floor(yt);
-    const fx = xt - centerTx;
-    const fy = yt - centerTy;
-
-    const mapWidth = maxWidth;
-    const mapHeight = Math.max(230, Math.min(420, maxWidth * 0.66));
 
     section.classList.remove('hidden');
 
-    let cols = Math.ceil(mapWidth / tileSize) + 1;
-    if (cols % 2 === 0) cols += 1;
-    let rows = Math.ceil(mapHeight / tileSize) + 1;
-    if (rows % 2 === 0) rows += 1;
+    const cityName = UI._compassCityName ? this._esc(UI._compassCityName) : '';
+    const country = UI._compassCountry ? this._esc(UI._compassCountry) : '';
 
-    const startTx = centerTx - Math.floor(cols / 2);
-    const startTy = centerTy - Math.floor(rows / 2);
+    const dirDeg = windDir != null ? Math.round(((windDir % 360) + 360) % 360) : null;
+    const fromDir = dirDeg != null ? Utils.getWindDirection(dirDeg) : null;
+    const toDeg = dirDeg != null ? (dirDeg + 180) % 360 : null;
+    const toDir = toDeg != null ? Utils.getWindDirection(toDeg) : null;
 
-    const pointX = (centerTx - startTx + fx) * tileSize;
-    const pointY = (centerTy - startTy + fy) * tileSize;
-    const offX = Math.round(mapWidth / 2 - pointX);
-    const offY = Math.round(mapHeight / 2 - pointY);
-
-    let tiles = '';
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const tx = ((startTx + c) % n + n) % n;
-        const ty = startTy + r;
-        if (ty < 0 || ty >= n) continue;
-        tiles += `<img src="https://tile.openstreetmap.org/${zoom}/${tx}/${ty}.png" alt="" loading="lazy" width="${tileSize}" height="${tileSize}">`;
-      }
+    const ticks = [];
+    for (let d = 0; d < 360; d += 15) {
+      const r = (d * Math.PI) / 180;
+      const major = d % 45 === 0;
+      const len = major ? 7 : 3;
+      ticks.push(
+        `<line x1="${(50 + Math.sin(r) * 42).toFixed(2)}" y1="${(50 - Math.cos(r) * 42).toFixed(2)}"` +
+        ` x2="${(50 + Math.sin(r) * (42 - len)).toFixed(2)}" y2="${(50 - Math.cos(r) * (42 - len)).toFixed(2)}"` +
+        ` stroke="currentColor" stroke-opacity="${major ? 0.55 : 0.28}" stroke-width="${major ? 2.4 : 1.2}"/>`
+      );
     }
 
-    const windDirDeg = windDir != null ? Math.round(windDir) : null;
-    const windArrowSvg = windDirDeg != null ? this._windArrowSVG(windDirDeg, 'map-badge__arrow', 28, 'currentColor') : '';
+    const cardinals = [0, 45, 90, 135, 180, 225, 270, 315].map((d) => {
+      const r = (d * Math.PI) / 180;
+      const major = d % 90 === 0;
+      const label = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][d / 45];
+      const x = 50 + Math.sin(r) * 29;
+      const y = 50 - Math.cos(r) * 29;
+      return `<text x="${x.toFixed(2)}" y="${(y + 3.4).toFixed(2)}" text-anchor="middle"` +
+        ` font-size="${major ? 10 : 7}" font-weight="${major ? 800 : 600}" fill="currentColor" opacity="${major ? 0.95 : 0.6}">${label}</text>`;
+    }).join('');
 
-    const desc = (info && info.desc) || (weatherCode != null ? Utils.getWeatherDescription(weatherCode) : '');
+    const arrow = dirDeg != null
+      ? `<g transform="rotate(${toDeg} 50 50)">
+           <line x1="50" y1="52" x2="50" y2="18" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/>
+           <polygon points="50,7 58,25 42,25" fill="currentColor"/>
+           <polygon points="50,52 57,45 43,45" fill="currentColor" opacity="0.35"/>
+        </g>`
+      : '';
 
     container.innerHTML = `
-      <div class="map-view" style="height:${mapHeight}px">
-        <div class="map-tiles" style="grid-template-columns:repeat(${cols}, ${tileSize}px); left:${offX}px; top:${offY}px">
-          ${tiles}
-        </div>
-        <div class="map-veil" aria-hidden="true"></div>
-        <div class="map-pin" aria-hidden="true"><i></i></div>
-<div class="map-badge" style="--temp-bg:${tempColor}" aria-hidden="true">
-          <span class="map-badge__icon">${WeatherIcons.get(weatherCode || 0, isDay !== 0)}</span>
-          <span class="map-badge__data">
-            <span class="map-badge__temp">${tempLabel || ''}</span>
-            ${desc ? `<span class="map-badge__desc">${desc}</span>` : ''}
-            <span class="map-badge__wind">${windLabel ? `Wind ${windLabel}` : 'Wind'}${windArrowSvg}</span>
-          </span>
-        </div>
-        <div class="map-attribution">
-          <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">&copy; OpenStreetMap</a>
-        </div>
-        <div class="map-compass" aria-hidden="true">
-          <svg viewBox="0 0 36 40">
-            <polygon points="18,2 28,22 8,22" fill="currentColor"/>
-            <polygon points="18,38 28,22 8,22" fill="currentColor" opacity="0.25"/>
+      <div class="weather-compass">
+        <div class="weather-compass__rose">
+          <svg viewBox="0 0 100 100" class="weather-compass__svg" role="img"
+               aria-label="${dirDeg != null ? `Wind from ${fromDir}, blowing toward ${toDir}` : 'Wind direction not available'}">
+            <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-opacity="0.18" stroke-width="1.5"/>
+            <circle cx="50" cy="50" r="37" fill="none" stroke="currentColor" stroke-opacity="0.1" stroke-width="1" stroke-dasharray="2 3"/>
+            ${ticks}
+            ${cardinals}
+            ${arrow}
+            <circle cx="50" cy="50" r="3.4" fill="currentColor" opacity="0.6"/>
           </svg>
-          <span>N</span>
+        </div>
+        <div class="weather-compass__meta">
+          <div class="weather-compass__city">${cityName}${country ? `<span class="weather-compass__country">${country}</span>` : ''}</div>
+          <div class="weather-compass__coords">${Number(lat).toFixed(2)}&deg;, ${Number(lon).toFixed(2)}&deg;</div>
+          <div class="weather-compass__wind">
+            <span class="weather-compass__wind-speed">${windLabel || 'Wind —'}</span>
+            ${dirDeg != null ? `<span class="weather-compass__wind-dir">blowing ${toDir} &middot; from ${fromDir}</span>` : ''}
+          </div>
         </div>
       </div>
     `;
   },
 
-  hideMap() {
-    const section = this.$('mapSection');
+  hideCompass() {
+    const section = this.$('compassSection');
     if (section) section.classList.add('hidden');
   },
 
@@ -529,8 +511,10 @@ const UI = {
       const max = daily.temperature_2m_max && daily.temperature_2m_max[i] != null ? Math.round(daily.temperature_2m_max[i]) : '—';
       const min = daily.temperature_2m_min && daily.temperature_2m_min[i] != null ? Math.round(daily.temperature_2m_min[i]) : '—';
       const pop = this.daytimeMaxPop(date, hourly) ?? (daily.precipitation_probability_max != null ? Math.round(daily.precipitation_probability_max[i] ?? 0) : 0);
-      const weatherCode = daily.weather_code[i];
-      const iconCode = WeatherIcons.dailyIcon(weatherCode, pop, daily.rain_sum ? daily.rain_sum[i] : null, daily.snowfall_sum ? daily.snowfall_sum[i] : null);
+      const rainSum = daily.rain_sum ? daily.rain_sum[i] : null;
+      const snowSum = daily.snowfall_sum ? daily.snowfall_sum[i] : null;
+      const weatherCode = WeatherIcons.dominantDayCode(date, hourly, pop, rainSum, snowSum) ?? daily.weather_code[i];
+      const iconCode = WeatherIcons.dailyIcon(weatherCode, pop, rainSum, snowSum);
       const icon = WeatherIcons.get(iconCode, true);
 
       const d = Utils.parseLocal(date + 'T00:00:00', this._tz);
@@ -965,7 +949,10 @@ const UI = {
     const sunrise = d.sunrise && d.sunrise[i] ? Utils.formatTime(d.sunrise[i], this._tz) : null;
     const sunset = d.sunset && d.sunset[i] ? Utils.formatTime(d.sunset[i], this._tz) : null;
 
-    const iconCode = WeatherIcons.dailyIcon(d.weather_code[i], pop, rainSum ?? 0, snowSum ?? 0);
+    const iconCode = WeatherIcons.dailyIcon(
+      WeatherIcons.dominantDayCode(date, this._forecastHourly, pop, rainSum ?? 0, snowSum ?? 0) ?? d.weather_code[i],
+      pop, rainSum ?? 0, snowSum ?? 0
+    );
     const icon = WeatherIcons.get(iconCode, true);
     const desc = Utils.getWeatherDescription(iconCode);
     const windUnit = Utils.getWindUnit(UI.windUnit);
@@ -1303,37 +1290,20 @@ const UI = {
     this.renderHourly(weatherData.hourly, units);
     this.renderHourlyChart(weatherData.hourly, units);
     this.renderDetailBoxes(weatherData, aqData, units);
-    const tempLabel = weatherData.current && weatherData.current.temperature_2m != null
-      ? Utils.formatTemp(weatherData.current.temperature_2m, units)
-      : '';
-    UI._mapTemp = tempLabel;
-    const tempValue = weatherData.current && weatherData.current.temperature_2m != null
-      ? weatherData.current.temperature_2m
-      : null;
-    UI._mapTempValue = tempValue;
     const windUnit = Utils.getWindUnit(this.windUnit);
     const windSpeed = weatherData.current && weatherData.current.wind_speed_10m != null
       ? Math.round(weatherData.current.wind_speed_10m)
       : null;
-    UI._mapWindLabel = windSpeed != null ? `${windSpeed} ${windUnit}` : '';
-    UI._mapWindDir = weatherData.current && weatherData.current.wind_direction_10m != null
+    UI._compassWindLabel = windSpeed != null ? `${windSpeed} ${windUnit}` : '';
+    UI._compassWindDir = weatherData.current && weatherData.current.wind_direction_10m != null
       ? Math.round(weatherData.current.wind_direction_10m)
       : null;
-    const c = weatherData.current || {};
-    const uvMax = weatherData.daily && weatherData.daily.uv_index_max && weatherData.daily.uv_index_max[0];
-    const uvIndex = uvMax != null ? Math.round(uvMax) : null;
-    UI._mapInfo = {
-      desc: c.weather_code != null ? Utils.getWeatherDescription(c.weather_code) : '',
-      feels: c.apparent_temperature != null ? `Feels ${Utils.formatTemp(c.apparent_temperature, units)}` : '',
-      humidity: c.relative_humidity_2m != null ? `${Math.round(c.relative_humidity_2m)}% humidity` : '',
-      uv: uvIndex != null ? `UV ${uvIndex}` : '',
-    };
+    UI._compassCityName = cityName;
+    UI._compassCountry = country;
     if (lat != null && lon != null) {
-      const weatherCode = weatherData.current && weatherData.current.weather_code != null ? weatherData.current.weather_code : 0;
-      const isDay = weatherData.current && weatherData.current.is_day != null ? weatherData.current.is_day : 1;
-      this.renderMap(lat, lon, tempLabel, tempValue, units, UI._mapWindLabel, UI._mapWindDir, weatherCode, isDay, UI._mapInfo);
+      this.renderWindCompass(lat, lon, UI._compassWindLabel, UI._compassWindDir);
     } else {
-      this.hideMap();
+      this.hideCompass();
     }
   },
 
@@ -1389,5 +1359,23 @@ const UI = {
     const safeStroke = stroke && /^#[0-9a-fA-F]{3,8}$/.test(stroke) ? stroke : '';
     const s = safeStroke ? ` stroke="${safeStroke}" fill="none"` : '';
     return `<svg class="${safeClass}" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform:rotate(${Math.round(dir)}deg)"><path d="M12 19V5"${s}/><path d="M5 12l7-7 7 7"${s}/></svg>`;
+  },
+
+  _metricIcon(name) {
+    const icons = {
+      precip: `<path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/>`,
+      humidity: `<path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"/><path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97"/>`,
+      wind: `<path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/>`,
+      uv: `<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/>`,
+      visibility: `<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>`,
+      pressure: `<path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>`,
+      bolt: `<path d="M13 2 3 14h7l-1 8 10-14h-7l1-8z"/>`,
+      aqi: `<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>`,
+      pollen: `<circle cx="12" cy="12" r="2.5"/><path d="M12 5v-2"/><path d="M12 21v-2"/><path d="M5 12H3"/><path d="M21 12h-2"/><path d="M6.8 6.8 5.4 5.4"/><path d="M18.6 18.6l-1.4-1.4"/><path d="M17.2 6.8l1.4-1.4"/><path d="M5.4 18.6l1.4-1.4"/>`,
+      swap: `<path d="M7 3v14"/><path d="M4 14l3 3 3-3"/><path d="M17 21V7"/><path d="M14 10l-3-3-3 3"/>`,
+    };
+    const body = icons[name] || '';
+    if (!body) return '';
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
   },
 };

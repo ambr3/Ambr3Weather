@@ -70,6 +70,44 @@ const WeatherIcons = {
     return code;
   },
 
+  // Open-Meteo's daily weather_code is the *most severe* condition of the day,
+  // not the predominant one — a day with lots of sun and a brief overcast spell
+  // would otherwise be summarized as "overcast". Derive the day's look from
+  // the most common condition during daylight hours instead. Ties lean toward
+  // the sunnier reading, except when real precipitation is present: an honest
+  // "showers" day is never shown as a sun icon.
+  _groupRep: { clear: 0, clearsome: 1, clouds: 2, overcast: 3, fog: 45, drizzle: 51, rain: 61, snow: 71, thunder: 95 },
+
+  dominantDayCode(dateStr, hourly, pop, rainSum, snowSum) {
+    if (!hourly || !hourly.time || !hourly.weather_code) return null;
+    const prefix = dateStr + 'T';
+    const counts = {};
+    let seen = 0;
+    for (let k = 0; k < hourly.time.length; k++) {
+      if (!hourly.time[k].startsWith(prefix)) continue;
+      if (hourly.is_day && hourly.is_day[k] === 0) continue;
+      const wc = hourly.weather_code[k];
+      if (wc == null) continue;
+      const g = this._group(wc);
+      counts[g] = (counts[g] || 0) + 1;
+      seen++;
+    }
+    if (!seen) return null;
+    const maxCount = Math.max(...Object.values(counts));
+    const lead = Object.keys(counts).filter((g) => counts[g] === maxCount);
+    if (lead.length === 1) return this._groupRep[lead[0]];
+
+    const p = pop != null ? pop : 0;
+    const rain = rainSum != null ? rainSum : 0;
+    const snow = snowSum != null ? snowSum : 0;
+    const hasPrecip = (rain >= 1 && p >= 30) || (snow > 0 && p >= 30) || p >= 50;
+    const precipGroups = ['drizzle', 'rain', 'snow', 'thunder'];
+    const tiedPrecip = lead.filter((g) => precipGroups.includes(g));
+    if (hasPrecip && tiedPrecip.length) return this._groupRep[tiedPrecip[0]];
+    const order = ['clear', 'clearsome', 'clouds', 'overcast', 'fog', 'drizzle', 'rain', 'snow', 'thunder'];
+    return this._groupRep[order.find((g) => lead.includes(g))];
+  },
+
   _svg(body, viewBox = '0 0 64 64') {
     return `<svg viewBox="${viewBox}" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" aria-hidden="true">${body}</svg>`;
   },

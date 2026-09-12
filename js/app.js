@@ -130,6 +130,19 @@ const App = {
       this.$('installBanner').classList.add('hidden');
     });
 
+    this.$('clearDataBtn').addEventListener('click', async () => {
+      if (!window.confirm('Erase all local data and cached forecasts?')) return;
+      const keys = ['units', 'windUnit', 'visUnit', 'pressUnit', 'forecastDays', 'hourlyAll', 'chartMode', 'dynamicText', 'theme', 'lastCity', 'lastCountry', 'lastLat', 'lastLon', 'weatherCache'];
+      keys.forEach((k) => { try { localStorage.removeItem(k); } catch (e) {} });
+      if (window.caches) {
+        try {
+          const cacheKeys = await window.caches.keys();
+          await Promise.all(cacheKeys.map((k) => window.caches.delete(k)));
+        } catch (e) {}
+      }
+      window.location.reload();
+    });
+
     this.$('installBtn').addEventListener('click', () => {
       if (this.deferredPrompt) {
         this.deferredPrompt.prompt().catch(() => {});
@@ -165,8 +178,7 @@ const App = {
       UI._updateChartHint();
       UI._updateHourlyScroll();
       if (this._last.lat != null && this._last.lon != null) {
-        const c = this._last.weather.current || {};
-        UI.renderMap(this._last.lat, this._last.lon, UI._mapTemp || '', UI._mapTempValue, this._last.units, UI._mapWindLabel || '', UI._mapWindDir, c.weather_code || 0, c.is_day, UI._mapInfo || {});
+        UI.renderWindCompass(this._last.lat, this._last.lon, UI._compassWindLabel || '', UI._compassWindDir);
       }
     }, 250));
 
@@ -473,6 +485,20 @@ const App = {
         const ageMs = cached.savedAt ? Date.now() - cached.savedAt : 0;
         const ageHrs = Math.floor(ageMs / (60 * 60 * 1000));
         if (ageHrs >= 6) UI.markStale(true, `Forecast data is ${ageHrs}h old.`);
+
+        UI.renderWeather(weather, aq, this.units, name, country, cached.lat, cached.lon, this.forecastDays);
+        this._last = { weather, aq, units: this.units, name, country, lat: cached.lat, lon: cached.lon, forecastDays: this.forecastDays };
+        if (Number.isFinite(cached.lat) && Number.isFinite(cached.lon)) {
+          this.lastCity = name;
+          this.lastCountry = country;
+          this.lastLat = cached.lat;
+          this.lastLon = cached.lon;
+          Utils.safeSet('lastCity', name);
+          Utils.safeSet('lastCountry', country);
+          Utils.safeSet('lastLat', cached.lat);
+          Utils.safeSet('lastLon', cached.lon);
+        }
+        return;
       } else {
         UI.showError(err && err.message ? err.message : 'Something went wrong.');
         return;
@@ -519,7 +545,7 @@ const App = {
           ? 'Location request timed out. Please search for a city.'
           : 'Location access denied. Please search for a city.');
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 }
     );
   },
 

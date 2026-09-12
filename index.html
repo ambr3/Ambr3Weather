@@ -12,7 +12,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(self), gyroscope=(), magnetometer=(), payment=(), usb=()">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests; connect-src https://api.open-meteo.com https://air-quality-api.open-meteo.com https://geocoding-api.open-meteo.com; img-src 'self' https://tile.openstreetmap.org; style-src 'self' 'unsafe-inline'; script-src 'self';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests; connect-src https://api.open-meteo.com https://air-quality-api.open-meteo.com https://geocoding-api.open-meteo.com; img-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';">
 
   <title>Seclusa Weather — Private Weather</title>
 
@@ -20,8 +20,8 @@
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
   <link rel="icon" type="image/svg+xml" href="assets/icons/icon-192.svg">
 
-  <link rel="stylesheet" href="css/style.css?v=0.5.15">
-  <link rel="stylesheet" href="css/responsive.css?v=0.5.15">
+  <link rel="stylesheet" href="css/style.css?v=0.5.16">
+  <link rel="stylesheet" href="css/responsive.css?v=0.5.16">
   <link rel="preconnect" href="https://api.open-meteo.com">
   <link rel="preconnect" href="https://air-quality-api.open-meteo.com">
   <link rel="preconnect" href="https://geocoding-api.open-meteo.com">
@@ -127,12 +127,16 @@
     <h2 class="instructions__title">How to use Seclusa Weather</h2>
     <ol class="instructions__list">
       <li><strong>Search or locate</strong> — type a city in the search box, or tap the crosshair button to use your current location.</li>
-      <li><strong>View the forecast</strong> — the main card shows today's conditions, sun/moon times, and an arc of daylight. Below it are the hourly, 7&nbsp;or&nbsp;14&nbsp;day forecast, and a map of your area.</li>
+      <li><strong>View the forecast</strong> — the main card shows today's conditions, sun/moon times, and an arc of daylight. Below it are the hourly, 7&nbsp;or&nbsp;14&nbsp;day forecast, and a wind compass for your area.</li>
       <li><strong>Switch units</strong> — tap the units button (°C) in the top bar to change temperature, wind speed, and visibility units.</li>
       <li><strong>Explore conditions</strong> — the Conditions card groups precipitation, wind, humidity, UV index, visibility, pressure, air quality, and pollen.</li>
       <li><strong>Works offline</strong> — the last forecast is saved, so the app works without a connection.</li>
       <li><strong>Install it</strong> — tap the install banner on Android, or on iPhone use Share &rarr; "Add to Home Screen".</li>
     </ol>
+    <div class="instructions__actions">
+      <button class="instructions__action" id="clearDataBtn" type="button">Erase my data</button>
+      <p class="instructions__note">Deletes the saved city, coordinates, settings, and every cached forecast from this device.</p>
+    </div>
   </section>
 
   <main>
@@ -245,10 +249,9 @@
 
   <footer class="footer">
     <p>
-      Seclusa Weather v0.5.15 &mdash; No tracking. No ads. No cookies.
+      Seclusa Weather v0.5.16 &mdash; No tracking. No ads. No cookies.
       <br>
       Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo.com</a> &mdash; <a href="https://open-meteo.com/license" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>.
-      Map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>.
       <br>
       <a href="https://github.com/ambr3/SeclusaWeather" target="_blank" rel="noopener noreferrer">Open source</a> under GPL.
     </p>
@@ -263,11 +266,11 @@
 
   <div class="hourly-modal hidden" id="hourlyModal" role="dialog" aria-modal="true" aria-label="Forecast details"></div>
 
-  <script src="js/config.js?v=0.5.15"></script>
-  <script src="js/utils.js?v=0.5.15"></script>
-  <script src="js/icons.js?v=0.5.15"></script>
-  <script src="js/api.js?v=0.5.15"></script>
-  <script src="js/ui.js?v=0.5.15"></script>
-  <script src="js/app.js?v=0.5.15"></script>
+  <script src="js/config.js?v=0.5.16"></script>
+  <script src="js/utils.js?v=0.5.16"></script>
+  <script src="js/icons.js?v=0.5.16"></script>
+  <script src="js/api.js?v=0.5.16"></script>
+  <script src="js/ui.js?v=0.5.16"></script>
+  <script src="js/app.js?v=0.5.16"></script>
 </body>
 </html>

@@ -1,1 +1,5 @@
-# Intentionally empty — nothing to ignore in this static site.
+# Local project rules — not part of the published site.
+AGENTS.md
+
+# Local opencode configuration — not part of the published site.
+.opencode/

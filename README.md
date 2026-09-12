@@ -28,7 +28,7 @@
 
 ---
 
-Keeps your weather your own. Seclusa Weather is a **pure static, open-source weather app**. Everything runs in your browser: preferences and a cached forecast live only on your device, and the only outbound requests are to the [Open-Meteo](https://open-meteo.com/) API and OpenStreetMap tiles. Installable, offline-capable, and auditable end-to-end.
+Keeps your weather your own. Seclusa Weather is a **pure static, open-source weather app**. Everything runs in your browser: preferences and a cached forecast live only on your device, and the only outbound requests are to the [Open-Meteo](https://open-meteo.com/) APIs (weather, air quality, and geocoding). Installable, offline-capable, and auditable end-to-end.
 
 ---
 
@@ -48,7 +48,7 @@ Keeps your weather your own. Seclusa Weather is a **pure static, open-source wea
 - **UV index** — color-coded badge with risk level
 
 ### 🗺️ Location
-- **Static map** — OpenStreetMap tile with a location pin
+- **Wind compass** — a live SVG rose showing which way the wind is blowing, with speed, gusts, and your selected location's coordinates. No map service involved
 - **Geolocation** — "use my location", fully opt-in, on button tap only
 
 ### 🎨 Interface
@@ -69,16 +69,17 @@ Your data is your business. That's the whole point.
 | 🖥️ **No server** | Pure static site — nothing runs on a server |
 | 🔑 **No API key** | Powered by free open-source [Open-Meteo](https://open-meteo.com/), no account needed |
 | 🏠 **Stays on device** | Preferences, last location, and cached forecast never leave your device |
-| 📤 **What leaves** | Forecasts (with coordinates) go to Open-Meteo; map tiles come from OpenStreetMap. Nothing else |
-| 🧹 **Self-cleaning cache** | Old cached data removes itself after 7 days |
-| 📍 **Geolocation opt-in** | Only on button tap, sent only to Open-Meteo + OpenStreetMap |
-| 🛡️ **Locked-down security** | The app can only reach the weather and map servers it actually needs |
+| 📤 **What leaves** | Forecasts (with coordinates) go to Open-Meteo. Nothing else |
+| 🧹 **Self-cleaning cache** | Cached API responses remove themselves after 7 days; the on-device forecast snapshot is overwritten on every refresh |
+| 🧽 **Erase anytime** | The Help panel's "Erase my data" wipes the saved city, coordinates, settings, and every cache in one tap |
+| 📍 **Geolocation opt-in** | Only on button tap, sent only to Open-Meteo |
+| 🛡️ **Locked-down security** | The app can only reach the weather servers it actually needs |
 | 🕵️ **No hidden sharing** | Nothing beyond the forecast request itself ever leaves your device |
 | 🚫 **Camera & mic stay off** | Access to camera, microphone, motion sensors, and payment is blocked |
 | 🖼️ **Can't be embedded** | The app won't run inside other websites (best-effort — GitHub Pages limits header support, and there's nothing to gain from embedding anyway) |
 | 📜 **Open source** | GPL-3.0 — read every line |
 
-> ⚠️ **Geolocation note:** your coordinates *are* sent to the weather API when you view a forecast or the map. It's the only way to get a local forecast — but it's disclosed, opt-in, and never logged or shared.
+> ⚠️ **Geolocation note:** your coordinates *are* sent to the weather API when you view a forecast. It's the only way to get a local forecast — but it's disclosed, opt-in, and never logged or shared. If you previously used "my location", the app automatically re-sends those saved coordinates to refresh the forecast on **every visit**; use Help → **"Erase my data"** to remove them. (The shields.io images above load only when this README is viewed on GitHub — the app itself never loads them.)
 
 ---
 

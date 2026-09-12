@@ -1,19 +1,20 @@
-const CACHE_NAME = 'seclusaweather-v0.5.15';
+const CACHE_NAME = 'seclusaweather-v0.5.16';
 const API_CACHE = 'seclusaweather-api-v1';
-const VERSION = 'v0.5.15';
+const VERSION = 'v0.5.16';
+const ASSET_VER = '0.5.16';
 const STATIC_ASSETS = [
   './',
   './index.html',
   './offline.html',
-  `./css/style.css?v=${VERSION}`,
-  `./css/responsive.css?v=${VERSION}`,
-  `./js/config.js?v=${VERSION}`,
-  `./js/utils.js?v=${VERSION}`,
-  `./js/icons.js?v=${VERSION}`,
-  `./js/api.js?v=${VERSION}`,
-  `./js/ui.js?v=${VERSION}`,
-  `./js/app.js?v=${VERSION}`,
-  `./js/offline.js?v=${VERSION}`,
+  `./css/style.css?v=${ASSET_VER}`,
+  `./css/responsive.css?v=${ASSET_VER}`,
+  `./js/config.js?v=${ASSET_VER}`,
+  `./js/utils.js?v=${ASSET_VER}`,
+  `./js/icons.js?v=${ASSET_VER}`,
+  `./js/api.js?v=${ASSET_VER}`,
+  `./js/ui.js?v=${ASSET_VER}`,
+  `./js/app.js?v=${ASSET_VER}`,
+  `./js/offline.js?v=${ASSET_VER}`,
   './manifest.json',
   './assets/icons/icon-192.svg',
   './assets/icons/icon-512.svg',
@@ -40,11 +41,15 @@ self.addEventListener('activate', (event) => {
           .filter((k) => k !== CACHE_NAME && k !== API_CACHE)
           .map((k) => caches.delete(k))
       )
-    ).then(() => pruneApiCache()).then(() => self.clients.claim())
+    ).then(() => pruneApiCache()).then(() => {
+      self.clients.claim();
+      setInterval(pruneApiCache, PRUNE_INTERVAL);
+    })
   );
 });
 
 const API_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+const PRUNE_INTERVAL = 6 * 60 * 60 * 1000;
 
 async function pruneApiCache() {
   try {
@@ -73,7 +78,11 @@ self.addEventListener('fetch', (event) => {
       caches.open(API_CACHE).then((cache) =>
         fetch(request)
           .then((response) => {
-            if (response && response.ok) cache.put(request, response.clone());
+            if (response && response.ok) {
+              cache.put(request, response.clone())
+                .then(() => pruneApiCache())
+                .catch(() => {});
+            }
             return response;
           })
           .catch(() => cache.match(request))

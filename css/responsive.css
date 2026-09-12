@@ -49,7 +49,7 @@
   }
 
   .detail-box--conditions,
-  .detail-box--map {
+  .detail-box--compass {
     grid-column: 1 / span 2;
   }
 
@@ -124,16 +124,6 @@
     font-size: 1.1rem;
   }
 
-  .map-badge {
-    max-width: min(200px, 74vw);
-  }
-
-  .map-compass {
-    top: auto;
-    bottom: 50px;
-    right: 8px;
-  }
-
   .current-weather {
     padding: 1.25rem;
   }
@@ -169,7 +159,7 @@
   }
 
   .detail-box--conditions,
-  .detail-box--map {
+  .detail-box--compass {
     grid-column: span 1;
   }
 
@@ -178,11 +168,11 @@
   }
 
   .conditions-item__value {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
   }
 
   .conditions-item__sub {
-    font-size: 1.05rem;
+    font-size: 0.95rem;
   }
 
   .detail-box {
@@ -194,7 +184,7 @@
   }
 
   .detail-box__chip {
-    font-size: 1.05rem;
+    font-size: 0.95rem;
   }
 
   .forecast-card__row {

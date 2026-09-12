@@ -4,6 +4,7 @@
   "description": "No tracking. No ads. No cookies.",
   "start_url": "./",
   "scope": "./",
+  "id": "./",
   "display": "standalone",
   "background_color": "#1b2a5e",
   "theme_color": "#2f6fcf",
