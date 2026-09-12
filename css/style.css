@@ -1357,6 +1357,18 @@ body:not(.theme-dark).theme-mist .hourly-tile--now .hourly-tile__temp {
   font-weight: 700;
 }
 
+.weather-compass__gust {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.weather-compass__wind-max {
+  margin-top: 0.1rem;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
 .weather-compass__wind-dir {
   font-size: 0.85rem;
   color: var(--color-text-muted);

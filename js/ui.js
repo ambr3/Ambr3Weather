@@ -408,7 +408,7 @@ const UI = {
     }
   },
 
-  renderWindCompass(lat, lon, windLabel, windDir) {
+  renderWindCompass(lat, lon, windLabel, windDir, gustLabel, dayMaxLabel) {
     const container = this.$('compassContainer');
     const section = this.$('compassSection');
     if (!container || !section) return;
@@ -470,8 +470,9 @@ const UI = {
           <div class="weather-compass__city">${cityName}${country ? `<span class="weather-compass__country">${country}</span>` : ''}</div>
           <div class="weather-compass__coords">${Number(lat).toFixed(2)}&deg;, ${Number(lon).toFixed(2)}&deg;</div>
           <div class="weather-compass__wind">
-            <span class="weather-compass__wind-speed">${windLabel || 'Wind —'}</span>
+            <span class="weather-compass__wind-speed">${windLabel || 'Wind —'}${gustLabel ? `<span class="weather-compass__gust"> &middot; gusts ${gustLabel}</span>` : ''}</span>
             ${dirDeg != null ? `<span class="weather-compass__wind-dir">blowing ${toDir} &middot; from ${fromDir}</span>` : ''}
+            ${dayMaxLabel ? `<span class="weather-compass__wind-max">${dayMaxLabel}</span>` : ''}
           </div>
         </div>
       </div>
@@ -1291,17 +1292,28 @@ const UI = {
     this.renderHourlyChart(weatherData.hourly, units);
     this.renderDetailBoxes(weatherData, aqData, units);
     const windUnit = Utils.getWindUnit(this.windUnit);
-    const windSpeed = weatherData.current && weatherData.current.wind_speed_10m != null
-      ? Math.round(weatherData.current.wind_speed_10m)
-      : null;
+    const cur = weatherData.current;
+    const windSpeed = cur && cur.wind_speed_10m != null ? Math.round(cur.wind_speed_10m) : null;
     UI._compassWindLabel = windSpeed != null ? `${windSpeed} ${windUnit}` : '';
-    UI._compassWindDir = weatherData.current && weatherData.current.wind_direction_10m != null
-      ? Math.round(weatherData.current.wind_direction_10m)
+    UI._compassWindDir = cur && cur.wind_direction_10m != null
+      ? Math.round(cur.wind_direction_10m)
       : null;
+    const gust = cur && cur.wind_gusts_10m != null ? Math.round(cur.wind_gusts_10m) : null;
+    UI._compassGustLabel = gust != null ? `${gust} ${windUnit}` : '';
+    const daily = weatherData.daily;
+    let dayMaxLabel = '';
+    if (daily && daily.wind_speed_10m_max) {
+      const parts = [];
+      if (daily.wind_speed_10m_max[0] != null) parts.push(`max ${Math.round(daily.wind_speed_10m_max[0])} ${windUnit}`);
+      if (daily.wind_gusts_10m_max && daily.wind_gusts_10m_max[0] != null) parts.push(`gusts ${Math.round(daily.wind_gusts_10m_max[0])} ${windUnit}`);
+      if (daily.wind_direction_10m_dominant && daily.wind_direction_10m_dominant[0] != null) parts.push(`mostly from ${Utils.getWindDirection(Math.round(daily.wind_direction_10m_dominant[0]))}`);
+      if (parts.length) dayMaxLabel = `Today ${parts.join(' · ')}`;
+    }
+    UI._compassDayMaxLabel = dayMaxLabel;
     UI._compassCityName = cityName;
     UI._compassCountry = country;
     if (lat != null && lon != null) {
-      this.renderWindCompass(lat, lon, UI._compassWindLabel, UI._compassWindDir);
+      this.renderWindCompass(lat, lon, UI._compassWindLabel, UI._compassWindDir, UI._compassGustLabel, UI._compassDayMaxLabel);
     } else {
       this.hideCompass();
     }

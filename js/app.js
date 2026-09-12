@@ -178,7 +178,7 @@ const App = {
       UI._updateChartHint();
       UI._updateHourlyScroll();
       if (this._last.lat != null && this._last.lon != null) {
-        UI.renderWindCompass(this._last.lat, this._last.lon, UI._compassWindLabel || '', UI._compassWindDir);
+        UI.renderWindCompass(this._last.lat, this._last.lon, UI._compassWindLabel || '', UI._compassWindDir, UI._compassGustLabel || '', UI._compassDayMaxLabel || '');
       }
     }, 250));
 

@@ -112,34 +112,23 @@ const WeatherIcons = {
     return `<svg viewBox="${viewBox}" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" aria-hidden="true">${body}</svg>`;
   },
 
-  // Cloud silhouette: a solid WHITE cloud. A slightly-larger grey duplicate
-  // offset 2px below gives it a soft edge so it still reads on pale cards —
-  // without splitting the body into two visible tones.
+  // Cloud silhouette: a single continuous outline — three puffs traced over a
+  // smoothly rounded underside. No separate base shape, so the bottom reads as
+  // one soft curve instead of a dome or a jagged skirt. A slightly-larger grey
+  // duplicate offset 2px below gives a soft edge on pale cards.
   _cloud: (fill = '#FFFFFF') => `
     <g transform="translate(0,1.5)" opacity="0.65">
-      <ellipse cx="32" cy="40" rx="20" ry="10.5" fill="#8FA6BB"/>
-      <circle cx="17" cy="30" r="10" fill="#8FA6BB"/>
-      <circle cx="31" cy="24.5" r="12" fill="#8FA6BB"/>
-      <circle cx="44" cy="30.5" r="8.5" fill="#8FA6BB"/>
+      <path d="M17 40 C 13.10 40.00 9.55 37.73 7.92 34.18 C 6.28 30.63 6.86 26.46 9.40 23.50 C 11.94 20.53 15.98 19.31 19.73 20.38 C 21.57 15.34 26.54 12.14 31.89 12.53 C 37.24 12.93 41.68 16.83 42.76 22.09 C 45.91 21.63 49.06 22.96 50.91 25.55 C 52.77 28.14 53.02 31.55 51.56 34.39 C 50.10 37.22 47.19 39.00 44.00 39.00 C 38 47 26 47 17 40 Z" fill="#8FA6BB"/>
     </g>
-    <ellipse cx="32" cy="40" rx="20" ry="10.5" fill="${fill}"/>
-    <circle cx="17" cy="30" r="10" fill="${fill}"/>
-    <circle cx="31" cy="24.5" r="12" fill="${fill}"/>
-    <circle cx="44" cy="30.5" r="8.5" fill="${fill}"/>
+    <path d="M17 40 C 13.10 40.00 9.55 37.73 7.92 34.18 C 6.28 30.63 6.86 26.46 9.40 23.50 C 11.94 20.53 15.98 19.31 19.73 20.38 C 21.57 15.34 26.54 12.14 31.89 12.53 C 37.24 12.93 41.68 16.83 42.76 22.09 C 45.91 21.63 49.06 22.96 50.91 25.55 C 52.77 28.14 53.02 31.55 51.56 34.39 C 50.10 37.22 47.19 39.00 44.00 39.00 C 38 47 26 47 17 40 Z" fill="${fill}"/>
   `,
 
   // Small cloud used on "mainly clear" icons, tucked in the lower-right.
   _smallCloud: () => `
     <g transform="translate(0,1.5)" opacity="0.55">
-      <ellipse cx="50" cy="47" rx="9" ry="5" fill="#9FB3C4"/>
-      <circle cx="44" cy="42" r="5.5" fill="#9FB3C4"/>
-      <circle cx="52" cy="40.5" r="6" fill="#9FB3C4"/>
-      <circle cx="58" cy="44" r="4" fill="#9FB3C4"/>
+      <path d="M44 47.5 C 41.67 47.50 39.58 46.03 38.81 43.82 C 38.04 41.62 38.74 39.17 40.56 37.71 C 42.38 36.25 44.93 36.10 46.91 37.33 C 48.27 35.13 50.89 34.06 53.41 34.67 C 55.92 35.27 57.76 37.42 57.98 40.00 C 59.41 39.99 60.74 40.75 61.46 41.99 C 62.18 43.23 62.18 44.75 61.47 45.99 C 60.75 47.23 59.43 48.00 58.00 48.00 C 55.5 52.5 46.5 52.5 44 47.5 Z" fill="#9FB3C4"/>
     </g>
-    <ellipse cx="50" cy="47" rx="9" ry="5" fill="#FFFFFF"/>
-    <circle cx="44" cy="42" r="5.5" fill="#FFFFFF"/>
-    <circle cx="52" cy="40.5" r="6" fill="#FFFFFF"/>
-    <circle cx="58" cy="44" r="4" fill="#FFFFFF"/>
+    <path d="M44 47.5 C 41.67 47.50 39.58 46.03 38.81 43.82 C 38.04 41.62 38.74 39.17 40.56 37.71 C 42.38 36.25 44.93 36.10 46.91 37.33 C 48.27 35.13 50.89 34.06 53.41 34.67 C 55.92 35.27 57.76 37.42 57.98 40.00 C 59.41 39.99 60.74 40.75 61.46 41.99 C 62.18 43.23 62.18 44.75 61.47 45.99 C 60.75 47.23 59.43 48.00 58.00 48.00 C 55.5 52.5 46.5 52.5 44 47.5 Z" fill="#FFFFFF"/>
   `,
 
   // Sun with optional rays. Rays are omitted when the sun is peeking from
